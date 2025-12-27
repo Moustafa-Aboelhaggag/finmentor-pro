@@ -88,16 +88,7 @@
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // إعدادات افتراضية للحماية من الخطأ في حال عدم وجود متغيرات البيئة
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyB_S2Iqjev6MPRccIy1-ykn4-PTZioc9Kw",
-  authDomain: "finmentorai-app.firebaseapp.com",
-  projectId: "finmentorai-app",
-  storageBucket: "finmentorai-app.firebasestorage.app",
-  messagingSenderId: "238569893906",
-  appId: "1:238569893906:web:ce0714ffc2251ba30ea8cb",
-  measurementId: "G-FRCC6WR869"
-};
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
