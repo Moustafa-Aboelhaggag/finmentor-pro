@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="html-root">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>FinMentor Pro | المستشار المالي الذكي</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans Arabic', sans-serif; background-color: #F8FAFC; }
+        .premium-card { background: white; border-radius: 24px; border: 1px solid #f1f5f9; transition: all 0.3s ease; }
+        .chart-container { position: relative; height: 220px; width: 100%; }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <header class="bg-white/80 backdrop-blur-md sticky top-0 z-[100] border-b border-slate-100 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3 cursor-pointer" onclick="window.showPage('home')">
+                <div class="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg">
+                    <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                </div>
+                <span class="text-xl font-black text-slate-900">FinMentor <span class="text-amber-500">Pro</span></span>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="bg-slate-100 p-1 rounded-xl flex">
+                    <button onclick="window.setLanguage('ar')" id="btn-ar" class="px-3 py-1 rounded-lg text-xs font-bold bg-white shadow-sm">AR</button>
+                    <button onclick="window.setLanguage('en')" id="btn-en" class="px-3 py-1 rounded-lg text-xs font-bold">EN</button>
+                </div>
+                <button onclick="window.showPage('ai-mentor')" class="bg-slate-900 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-amber-600 transition-colors">تحليل جديد</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow">
+        <div id="page-home" class="max-w-7xl mx-auto p-6 md:p-12 space-y-12 fade-in">
+            <div class="text-center space-y-6">
+                <h1 class="text-4xl md:text-6xl font-black text-slate-900">استشارتك المالية <span class="text-amber-500">الذكية</span></h1>
+                <p class="text-slate-500 text-lg max-w-2xl mx-auto">ارفع تقاريرك المالية بصيغة PDF أو صور واحصل على تحليل فوري وتوصيات استراتيجية.</p>
+                <div class="flex justify-center gap-4">
+                    <button onclick="window.showPage('ai-mentor')" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold shadow-xl">ابدأ الآن</button>
+                    <button onclick="window.showPage('reports')" class="bg-white border border-slate-200 px-8 py-4 rounded-2xl font-bold">التقارير السابقة</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-reports" class="hidden max-w-7xl mx-auto p-6 md:p-12 fade-in">
+            <h2 class="text-2xl font-black mb-6">تقاريرك المحفوظة</h2>
+            <div id="reports-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+        </div>
+
+        <div id="page-ai-mentor" class="hidden max-w-4xl mx-auto p-6 md:p-12 pb-40 fade-in">
+            <div id="chat-output" class="space-y-6"></div>
+        </div>
+    </main>
+
+    <div id="input-container" class="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 hidden">
+        <div class="bg-white border border-slate-200 rounded-3xl shadow-2xl p-2">
+            <div id="file-info" class="hidden px-4 py-2 border-b text-xs font-bold text-amber-600 flex justify-between">
+                <span id="file-name"></span>
+                <button onclick="window.clearFiles()">✕</button>
+            </div>
+            <div class="flex items-center gap-2">
+                <button onclick="document.getElementById('fileInput').click()" class="p-3 text-slate-400 hover:text-amber-500">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                </button>
+                <input type="file" id="fileInput" class="hidden" accept="image/*,application/pdf" onchange="window.handleFileUpload(event)">
+                <textarea id="userInput" placeholder="اسأل المستشار المالي..." class="flex-grow p-3 bg-transparent border-none focus:ring-0 resize-none" rows="1"></textarea>
+                <button id="sendBtn" onclick="window.processQuery()" class="bg-slate-900 text-white p-3 rounded-2xl">
+                    <svg id="sendIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                    <div id="loadingIcon" class="hidden w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyB_S2Iqjev6MPRccIy1-ykn4-PTZioc9Kw",
+  authDomain: "finmentorai-app.firebaseapp.com",
+  projectId: "finmentorai-app",
+  storageBucket: "finmentorai-app.firebasestorage.app",
+  messagingSenderId: "238569893906",
+  appId: "1:238569893906:web:ce0714ffc2251ba30ea8cb",
+  measurementId: "G-FRCC6WR869"
+};;
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'fin-mentor-v1';
+
+        let userUid = null;
+        let attachedFile = { base64: null, text: null, type: null };
+        let currentLang = 'ar';
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        window.showPage = (id) => {
+            ['home', 'reports', 'ai-mentor'].forEach(p => document.getElementById(`page-${p}`).classList.add('hidden'));
+            document.getElementById(`page-${id}`).classList.remove('hidden');
+            document.getElementById('input-container').classList.toggle('hidden', id !== 'ai-mentor');
+        };
+
+        window.setLanguage = (lang) => {
+            currentLang = lang;
+            document.getElementById('html-root').dir = lang === 'ar' ? 'rtl' : 'ltr';
+            document.getElementById('btn-ar').className = lang === 'ar' ? "px-3 py-1 rounded-lg bg-white shadow-sm" : "px-3 py-1 rounded-lg";
+            document.getElementById('btn-en').className = lang === 'en' ? "px-3 py-1 rounded-lg bg-white shadow-sm" : "px-3 py-1 rounded-lg";
+        };
+
+        window.handleFileUpload = async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            document.getElementById('file-info').classList.remove('hidden');
+            document.getElementById('file-name').innerText = file.name;
+            
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (ev) => attachedFile = { base64: ev.target.result.split(',')[1], type: 'image' };
+                reader.readAsDataURL(file);
+            } else if (file.type === 'application/pdf') {
+                const reader = new FileReader();
+                reader.onload = async function() {
+                    const pdf = await pdfjsLib.getDocument(new Uint8Array(this.result)).promise;
+                    let text = "";
+                    for(let i=1; i<=pdf.numPages; i++) {
+                        const page = await pdf.getPage(i);
+                        const content = await page.getTextContent();
+                        text += content.items.map(s => s.str).join(" ") + "\n";
+                    }
+                    attachedFile = { text, type: 'pdf' };
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        };
+
+        window.clearFiles = () => {
+            attachedFile = { base64: null, text: null, type: null };
+            document.getElementById('file-info').classList.add('hidden');
+        };
+
+        window.processQuery = async () => {
+            const text = document.getElementById('userInput').value.trim();
+            if (!text && !attachedFile.type) return;
+            
+            setLoading(true);
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: text,
+                        fileData: attachedFile.base64,
+                        pdfText: attachedFile.text,
+                        lang: currentLang
+                    })
+                });
+
+                if (!response.ok) throw new Error("Server Error");
+                const data = await response.json();
+                
+                renderReport(data, Date.now());
+                await addDoc(collection(db, 'artifacts', appId, 'users', userUid, 'reports'), {
+                    ...data, timestamp: serverTimestamp()
+                });
+
+                document.getElementById('userInput').value = "";
+                window.clearFiles();
+            } catch (err) {
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        function renderReport(data, id) {
+            const out = document.getElementById('chat-output');
+            const div = document.createElement('div');
+            div.className = "premium-card p-8 fade-in shadow-lg";
+            div.innerHTML = `
+                <h3 class="text-xl font-black mb-2">${data.title}</h3>
+                <p class="text-slate-600 mb-6">${data.summary}</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-3">
+                        ${data.metrics.map(m => `<div class="bg-slate-50 p-3 rounded-xl flex justify-between"><b>${m.label}</b><span>${m.value}</span></div>`).join('')}
+                    </div>
+                    <div class="chart-container"><canvas id="c-${id}"></canvas></div>
+                </div>
+            `;
+            out.prepend(div);
+            new Chart(document.getElementById(`c-${id}`), {
+                type: 'doughnut',
+                data: { labels: data.chart.labels, datasets: [{ data: data.chart.values, backgroundColor: ['#0F172A', '#F59E0B', '#64748B'] }] },
+                options: { maintainAspectRatio: false }
+            });
+        }
+
+        function setLoading(s) {
+            document.getElementById('sendIcon').classList.toggle('hidden', s);
+            document.getElementById('loadingIcon').classList.toggle('hidden', !s);
+            document.getElementById('sendBtn').disabled = s;
+        }
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                userUid = user.uid;
+                onSnapshot(query(collection(db, 'artifacts', appId, 'users', userUid, 'reports'), orderBy('timestamp', 'desc')), (snap) => {
+                    const grid = document.getElementById('reports-grid');
+                    grid.innerHTML = snap.docs.map(doc => `
+                        <div class="premium-card p-6 cursor-pointer" onclick='window.showReport(${JSON.stringify(doc.data())})'>
+                            <h4 class="font-bold">${doc.data().title}</h4>
+                            <span class="text-xs text-slate-400">تقرير مالي</span>
+                        </div>
+                    `).join('');
+                });
+            } else {
+                signInAnonymously(auth);
+            }
+        });
+    </script>
+</body>
+</html>
