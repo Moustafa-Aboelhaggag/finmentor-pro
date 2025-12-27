@@ -16,6 +16,8 @@
         .chart-container { position: relative; height: 220px; width: 100%; }
         .fade-in { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        /* تحسين استجابة الأزرار */
+        button:active { transform: scale(0.98); }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -85,7 +87,8 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        // إعدادات افتراضية للحماية من الخطأ في حال عدم وجود متغيرات البيئة
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyB_S2Iqjev6MPRccIy1-ykn4-PTZioc9Kw",
   authDomain: "finmentorai-app.firebaseapp.com",
@@ -94,22 +97,30 @@ const firebaseConfig = {
   messagingSenderId: "238569893906",
   appId: "1:238569893906:web:ce0714ffc2251ba30ea8cb",
   measurementId: "G-FRCC6WR869"
-};;
+};
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'fin-mentor-v1';
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'fin-mentor-pro-v1';
 
         let userUid = null;
         let attachedFile = { base64: null, text: null, type: null };
         let currentLang = 'ar';
 
+        // تهيئة عامل PDF.js
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
+        // تصدير الوظائف للـ window لتكون متاحة لـ onclick في HTML
         window.showPage = (id) => {
-            ['home', 'reports', 'ai-mentor'].forEach(p => document.getElementById(`page-${p}`).classList.add('hidden'));
-            document.getElementById(`page-${id}`).classList.remove('hidden');
-            document.getElementById('input-container').classList.toggle('hidden', id !== 'ai-mentor');
+            ['home', 'reports', 'ai-mentor'].forEach(p => {
+                const el = document.getElementById(`page-${p}`);
+                if (el) el.classList.add('hidden');
+            });
+            const target = document.getElementById(`page-${id}`);
+            if (target) target.classList.remove('hidden');
+            
+            const inputCont = document.getElementById('input-container');
+            if (inputCont) inputCont.classList.toggle('hidden', id !== 'ai-mentor');
         };
 
         window.setLanguage = (lang) => {
@@ -117,13 +128,22 @@ const firebaseConfig = {
             document.getElementById('html-root').dir = lang === 'ar' ? 'rtl' : 'ltr';
             document.getElementById('btn-ar').className = lang === 'ar' ? "px-3 py-1 rounded-lg bg-white shadow-sm" : "px-3 py-1 rounded-lg";
             document.getElementById('btn-en').className = lang === 'en' ? "px-3 py-1 rounded-lg bg-white shadow-sm" : "px-3 py-1 rounded-lg";
+            
+            // تحديث النصوص الأساسية (اختياري يمكنك التوسع هنا)
+            const input = document.getElementById('userInput');
+            if (input) input.placeholder = lang === 'ar' ? "اسأل المستشار المالي..." : "Ask the financial mentor...";
         };
 
         window.handleFileUpload = async (e) => {
             const file = e.target.files[0];
             if (!file) return;
-            document.getElementById('file-info').classList.remove('hidden');
-            document.getElementById('file-name').innerText = file.name;
+            
+            const fileInfo = document.getElementById('file-info');
+            const fileName = document.getElementById('file-name');
+            if (fileInfo && fileName) {
+                fileInfo.classList.remove('hidden');
+                fileName.innerText = file.name;
+            }
             
             if (file.type.startsWith('image/')) {
                 const reader = new FileReader();
@@ -132,14 +152,18 @@ const firebaseConfig = {
             } else if (file.type === 'application/pdf') {
                 const reader = new FileReader();
                 reader.onload = async function() {
-                    const pdf = await pdfjsLib.getDocument(new Uint8Array(this.result)).promise;
-                    let text = "";
-                    for(let i=1; i<=pdf.numPages; i++) {
-                        const page = await pdf.getPage(i);
-                        const content = await page.getTextContent();
-                        text += content.items.map(s => s.str).join(" ") + "\n";
+                    try {
+                        const pdf = await pdfjsLib.getDocument(new Uint8Array(this.result)).promise;
+                        let text = "";
+                        for(let i=1; i<=pdf.numPages; i++) {
+                            const page = await pdf.getPage(i);
+                            const content = await page.getTextContent();
+                            text += content.items.map(s => s.str).join(" ") + "\n";
+                        }
+                        attachedFile = { text, type: 'pdf' };
+                    } catch (err) {
+                        console.error("PDF Parsing Error:", err);
                     }
-                    attachedFile = { text, type: 'pdf' };
                 };
                 reader.readAsArrayBuffer(file);
             }
@@ -147,15 +171,20 @@ const firebaseConfig = {
 
         window.clearFiles = () => {
             attachedFile = { base64: null, text: null, type: null };
-            document.getElementById('file-info').classList.add('hidden');
+            const fileInfo = document.getElementById('file-info');
+            if (fileInfo) fileInfo.classList.add('hidden');
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput) fileInput.value = '';
         };
 
         window.processQuery = async () => {
-            const text = document.getElementById('userInput').value.trim();
+            const userInput = document.getElementById('userInput');
+            const text = userInput ? userInput.value.trim() : "";
             if (!text && !attachedFile.type) return;
             
             setLoading(true);
             try {
+                // ملاحظة: تأكد أن /api/analyze معرف في Vercel Functions
                 const response = await fetch('/api/analyze', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -171,14 +200,18 @@ const firebaseConfig = {
                 const data = await response.json();
                 
                 renderReport(data, Date.now());
-                await addDoc(collection(db, 'artifacts', appId, 'users', userUid, 'reports'), {
-                    ...data, timestamp: serverTimestamp()
-                });
+                
+                if (userUid) {
+                    await addDoc(collection(db, 'artifacts', appId, 'users', userUid, 'reports'), {
+                        ...data, timestamp: serverTimestamp()
+                    });
+                }
 
-                document.getElementById('userInput').value = "";
+                if (userInput) userInput.value = "";
                 window.clearFiles();
             } catch (err) {
-                console.error(err);
+                console.error("Query Error:", err);
+                // عرض رسالة خطأ بسيطة للمستخدم
             } finally {
                 setLoading(false);
             }
@@ -186,46 +219,64 @@ const firebaseConfig = {
 
         function renderReport(data, id) {
             const out = document.getElementById('chat-output');
+            if (!out) return;
             const div = document.createElement('div');
-            div.className = "premium-card p-8 fade-in shadow-lg";
+            div.className = "premium-card p-8 fade-in shadow-lg mb-6";
             div.innerHTML = `
-                <h3 class="text-xl font-black mb-2">${data.title}</h3>
-                <p class="text-slate-600 mb-6">${data.summary}</p>
+                <h3 class="text-xl font-black mb-2">${data.title || 'تحليل مالي'}</h3>
+                <p class="text-slate-600 mb-6">${data.summary || ''}</p>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-3">
-                        ${data.metrics.map(m => `<div class="bg-slate-50 p-3 rounded-xl flex justify-between"><b>${m.label}</b><span>${m.value}</span></div>`).join('')}
+                        ${(data.metrics || []).map(m => `<div class="bg-slate-50 p-3 rounded-xl flex justify-between"><b>${m.label}</b><span>${m.value}</span></div>`).join('')}
                     </div>
                     <div class="chart-container"><canvas id="c-${id}"></canvas></div>
                 </div>
             `;
             out.prepend(div);
-            new Chart(document.getElementById(`c-${id}`), {
-                type: 'doughnut',
-                data: { labels: data.chart.labels, datasets: [{ data: data.chart.values, backgroundColor: ['#0F172A', '#F59E0B', '#64748B'] }] },
-                options: { maintainAspectRatio: false }
-            });
+            
+            if (data.chart) {
+                new Chart(document.getElementById(`c-${id}`), {
+                    type: 'doughnut',
+                    data: { 
+                        labels: data.chart.labels, 
+                        datasets: [{ data: data.chart.values, backgroundColor: ['#0F172A', '#F59E0B', '#64748B'] }] 
+                    },
+                    options: { maintainAspectRatio: false }
+                });
+            }
         }
 
         function setLoading(s) {
-            document.getElementById('sendIcon').classList.toggle('hidden', s);
-            document.getElementById('loadingIcon').classList.toggle('hidden', !s);
-            document.getElementById('sendBtn').disabled = s;
+            const sendIcon = document.getElementById('sendIcon');
+            const loadingIcon = document.getElementById('loadingIcon');
+            const sendBtn = document.getElementById('sendBtn');
+            if (sendIcon) sendIcon.classList.toggle('hidden', s);
+            if (loadingIcon) loadingIcon.classList.toggle('hidden', !s);
+            if (sendBtn) sendBtn.disabled = s;
         }
 
+        // مراقبة حالة المصادقة
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 userUid = user.uid;
-                onSnapshot(query(collection(db, 'artifacts', appId, 'users', userUid, 'reports'), orderBy('timestamp', 'desc')), (snap) => {
+                const reportsRef = collection(db, 'artifacts', appId, 'users', userUid, 'reports');
+                const q = query(reportsRef, orderBy('timestamp', 'desc'));
+                
+                onSnapshot(q, (snap) => {
                     const grid = document.getElementById('reports-grid');
-                    grid.innerHTML = snap.docs.map(doc => `
-                        <div class="premium-card p-6 cursor-pointer" onclick='window.showReport(${JSON.stringify(doc.data())})'>
-                            <h4 class="font-bold">${doc.data().title}</h4>
-                            <span class="text-xs text-slate-400">تقرير مالي</span>
-                        </div>
-                    `).join('');
-                });
+                    if (!grid) return;
+                    grid.innerHTML = snap.docs.map(doc => {
+                        const d = doc.data();
+                        return `
+                            <div class="premium-card p-6 cursor-pointer hover:border-amber-500 transition-colors" onclick='alert("سيتم عرض التقرير قريباً")'>
+                                <h4 class="font-bold">${d.title || 'تقرير بدون عنوان'}</h4>
+                                <span class="text-xs text-slate-400">تاريخ: ${d.timestamp?.toDate().toLocaleDateString('ar-SA') || 'الآن'}</span>
+                            </div>
+                        `;
+                    }).join('');
+                }, (err) => console.error("Firestore Error:", err));
             } else {
-                signInAnonymously(auth);
+                signInAnonymously(auth).catch(err => console.error("Auth Error:", err));
             }
         });
     </script>
