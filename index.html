@@ -4,47 +4,78 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>FinMentor Pro | المستشار المالي الذكي</title>
+    
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%23f59e0b%22 stroke-width=%222.5%22><path d=%22M13 7h8m0 0v8m0-8l-8 8-4-4-6 6%22></path></svg>">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700;900&display=swap');
         body { font-family: 'Noto Sans Arabic', sans-serif; background-color: #F8FAFC; scroll-behavior: smooth; }
         .premium-card { background: white; border-radius: 24px; border: 1px solid #f1f5f9; transition: all 0.3s ease; }
+        .chart-container { position: relative; height: 250px; width: 100%; }
         .fade-in { animation: fadeIn 0.4s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         button:active { transform: scale(0.95); }
+        .loader { width: 20px; height: 20px; border: 3px solid #FFF; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <!-- التعديل: التأكد من أن الوظائف تعمل فوراً -->
     <script>
-        // وظائف التنقل واللغة يجب أن تكون خارج الموديول لضمان عملها على GitHub
-        window.showPage = function(id) {
-            console.log("Switching to page:", id);
-            const pages = ['home', 'reports', 'ai-mentor'];
-            pages.forEach(p => {
-                const el = document.getElementById('page-' + p);
-                if (el) el.classList.add('hidden');
-            });
-            
-            const target = document.getElementById('page-' + id);
-            if (target) target.classList.remove('hidden');
-            
-            const inputContainer = document.getElementById('input-container');
-            if (inputContainer) {
-                if (id === 'ai-mentor') inputContainer.classList.remove('hidden');
-                else inputContainer.classList.add('hidden');
+        const translations = {
+            ar: {
+                title: "استشارتك المالية <span class='text-amber-500'>الذكية</span>",
+                desc: "ارفع تقاريرك المالية واحصل على تحليل فوري وتوصيات استراتيجية.",
+                startBtn: "ابدأ الآن",
+                historyBtn: "التقارير السابقة",
+                newAnalysis: "تحليل جديد",
+                placeholder: "اسأل المستشار المالي أو ارفع ملفاً...",
+                welcome: "مرحباً بك! قم برفع ملف PDF أو صورة للبدء بالتحليل المالي.",
+                prevReports: "تقاريرك المحفوظة",
+                noReports: "لا توجد تقارير محفوظة حالياً."
+            },
+            en: {
+                title: "Your <span class='text-amber-500'>Smart</span> Financial Mentor",
+                desc: "Upload your financial reports and get instant analysis and strategic recommendations.",
+                startBtn: "Start Now",
+                historyBtn: "Previous Reports",
+                newAnalysis: "New Analysis",
+                placeholder: "Ask the mentor or upload a file...",
+                welcome: "Welcome! Upload a PDF or Image to start the financial analysis.",
+                prevReports: "Saved Reports",
+                noReports: "No saved reports yet."
             }
         };
 
-        window.setLanguage = function(lang) {
-            document.getElementById('html-root').dir = lang === 'ar' ? 'rtl' : 'ltr';
-            document.getElementById('btn-ar').className = lang === 'ar' ? "px-3 py-1 rounded-lg bg-white shadow-sm" : "px-3 py-1 rounded-lg";
-            document.getElementById('btn-en').className = lang === 'en' ? "px-3 py-1 rounded-lg bg-white shadow-sm" : "px-3 py-1 rounded-lg";
-            window.currentLang = lang;
+        window.showPage = function(id) {
+            const pages = ['home', 'reports', 'ai-mentor'];
+            pages.forEach(p => document.getElementById('page-' + p)?.classList.add('hidden'));
+            document.getElementById('page-' + id)?.classList.remove('hidden');
+            const inputContainer = document.getElementById('input-container');
+            if (inputContainer) id === 'ai-mentor' ? inputContainer.classList.remove('hidden') : inputContainer.classList.add('hidden');
         };
+
+        window.setLanguage = function(lang) {
+            window.currentLang = lang;
+            const t = translations[lang];
+            document.getElementById('html-root').dir = lang === 'ar' ? 'rtl' : 'ltr';
+            document.getElementById('main-title').innerHTML = t.title;
+            document.getElementById('main-desc').innerText = t.desc;
+            document.getElementById('start-btn-text').innerText = t.startBtn;
+            document.getElementById('history-btn-text').innerText = t.historyBtn;
+            document.getElementById('new-analysis-btn').innerText = t.newAnalysis;
+            document.getElementById('userInput').placeholder = t.placeholder;
+            document.getElementById('welcome-msg').innerText = t.welcome;
+            document.getElementById('reports-title').innerText = t.prevReports;
+            document.getElementById('btn-ar').className = lang === 'ar' ? "px-3 py-1 rounded-lg bg-white shadow-sm font-bold" : "px-3 py-1 rounded-lg font-bold text-slate-400";
+            document.getElementById('btn-en').className = lang === 'en' ? "px-3 py-1 rounded-lg bg-white shadow-sm font-bold" : "px-3 py-1 rounded-lg font-bold text-slate-400";
+        };
+
+        window.currentLang = 'ar';
     </script>
 
     <header class="bg-white/80 backdrop-blur-md sticky top-0 z-[100] border-b border-slate-100 px-6 py-4">
@@ -57,60 +88,59 @@
             </div>
             <div class="flex items-center gap-4">
                 <div class="bg-slate-100 p-1 rounded-xl flex">
-                    <button onclick="setLanguage('ar')" id="btn-ar" class="px-3 py-1 rounded-lg text-xs font-bold bg-white shadow-sm">AR</button>
-                    <button onclick="setLanguage('en')" id="btn-en" class="px-3 py-1 rounded-lg text-xs font-bold">EN</button>
+                    <button onclick="setLanguage('ar')" id="btn-ar" class="px-3 py-1 rounded-lg bg-white shadow-sm font-bold">AR</button>
+                    <button onclick="setLanguage('en')" id="btn-en" class="px-3 py-1 rounded-lg font-bold text-slate-400">EN</button>
                 </div>
-                <button onclick="showPage('ai-mentor')" class="bg-slate-900 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-amber-600 transition-colors">تحليل جديد</button>
+                <button id="new-analysis-btn" onclick="showPage('ai-mentor')" class="bg-slate-900 text-white px-4 py-2 rounded-full text-xs font-bold hover:bg-amber-600 transition-colors">تحليل جديد</button>
             </div>
         </div>
     </header>
 
     <main class="flex-grow">
-        <!-- الصفحة الرئيسية -->
         <div id="page-home" class="max-w-7xl mx-auto p-6 md:p-12 space-y-12 fade-in">
             <div class="text-center space-y-6">
-                <h1 class="text-4xl md:text-6xl font-black text-slate-900">استشارتك المالية <span class="text-amber-500">الذكية</span></h1>
-                <p class="text-slate-500 text-lg max-w-2xl mx-auto">ارفع تقاريرك المالية واحصل على تحليل فوري وتوصيات استراتيجية.</p>
+                <h1 id="main-title" class="text-4xl md:text-6xl font-black text-slate-900"></h1>
+                <p id="main-desc" class="text-slate-500 text-lg max-w-2xl mx-auto"></p>
                 <div class="flex justify-center gap-4">
-                    <button onclick="showPage('ai-mentor')" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:bg-slate-800">ابدأ الآن</button>
-                    <button onclick="showPage('reports')" class="bg-white border border-slate-200 px-8 py-4 rounded-2xl font-bold hover:bg-slate-50">التقارير السابقة</button>
+                    <button onclick="showPage('ai-mentor')" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:bg-slate-800">
+                        <span id="start-btn-text"></span>
+                    </button>
+                    <button onclick="showPage('reports')" class="bg-white border border-slate-200 px-8 py-4 rounded-2xl font-bold hover:bg-slate-50">
+                        <span id="history-btn-text"></span>
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- صفحة التقارير -->
         <div id="page-reports" class="hidden max-w-7xl mx-auto p-6 md:p-12 fade-in">
-            <h2 class="text-2xl font-black mb-6">تقاريرك المحفوظة</h2>
-            <div id="reports-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <p class="text-slate-400">لا توجد تقارير محفوظة حالياً.</p>
-            </div>
+            <h2 id="reports-title" class="text-2xl font-black mb-6"></h2>
+            <div id="reports-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
         </div>
 
-        <!-- صفحة المحادثة -->
         <div id="page-ai-mentor" class="hidden max-w-4xl mx-auto p-6 md:p-12 pb-40 fade-in">
             <div id="chat-output" class="space-y-6">
-                <div class="premium-card p-6 bg-amber-50 border-amber-100">
-                    <p class="text-amber-800 text-sm">مرحباً بك! قم برفع ملف PDF أو صورة للبدء بالتحليل المالي.</p>
+                <div id="welcome-card" class="premium-card p-6 bg-amber-50 border-amber-100">
+                    <p id="welcome-msg" class="text-amber-800 text-sm"></p>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- منطقة الإدخال -->
     <div id="input-container" class="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 hidden">
         <div class="bg-white border border-slate-200 rounded-3xl shadow-2xl p-2">
-            <div id="file-info" class="hidden px-4 py-2 border-b text-xs font-bold text-amber-600 flex justify-between">
-                <span id="file-name"></span>
-                <button onclick="window.clearFiles()">✕</button>
+            <div id="file-info" class="hidden px-4 py-2 border-b text-xs font-bold text-amber-600 flex justify-between items-center">
+                <span id="file-name" class="truncate max-w-[80%]"></span>
+                <button onclick="window.clearFiles()" class="text-slate-400 hover:text-red-500">✕</button>
             </div>
             <div class="flex items-center gap-2">
                 <button onclick="document.getElementById('fileInput').click()" class="p-3 text-slate-400 hover:text-amber-500">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
                 </button>
                 <input type="file" id="fileInput" class="hidden" accept="image/*,application/pdf">
-                <textarea id="userInput" placeholder="اسأل المستشار المالي..." class="flex-grow p-3 bg-transparent border-none focus:ring-0 resize-none" rows="1"></textarea>
-                <button id="sendBtn" class="bg-slate-900 text-white p-3 rounded-2xl">
-                    <svg id="sendIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                <textarea id="userInput" class="flex-grow p-3 bg-transparent border-none focus:ring-0 resize-none max-h-32" rows="1"></textarea>
+                <button id="sendBtn" class="bg-slate-900 text-white p-3 rounded-2xl hover:bg-amber-600 disabled:opacity-50">
+                    <svg id="sendIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                    <span id="loaderIcon" class="loader hidden"></span>
                 </button>
             </div>
         </div>
@@ -121,44 +151,160 @@
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // إعدادات Firebase
+        // إعداد Firebase من البيئة
         const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'fin-mentor-prod';
+        
+        // التعديل المهم: استخدام متغير بيئة للـ API Key
+        // سيتم استبدال هذا المتغير وقت التشغيل في Vercel/GitHub
+        const apiKey = ""; 
 
         let userUid = null;
+        let attachedFile = { data: null, type: null, name: "" };
 
-        // ربط الوظائف المتبقية بالكائن window
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
         window.clearFiles = () => {
+            attachedFile = { data: null, type: null, name: "" };
             document.getElementById('file-info').classList.add('hidden');
             document.getElementById('fileInput').value = '';
         };
 
-        // تفعيل Firebase والمصادقة
+        document.getElementById('fileInput').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            document.getElementById('file-info').classList.remove('hidden');
+            document.getElementById('file-name').innerText = file.name;
+            attachedFile.name = file.name;
+
+            const reader = new FileReader();
+            if (file.type.startsWith('image/')) {
+                reader.onload = (ev) => { attachedFile.data = ev.target.result.split(',')[1]; attachedFile.type = 'image'; };
+                reader.readAsDataURL(file);
+            } else if (file.type === 'application/pdf') {
+                reader.onload = async function() {
+                    const pdf = await pdfjsLib.getDocument(new Uint8Array(this.result)).promise;
+                    let text = "";
+                    for(let i=1; i<=pdf.numPages; i++){
+                        const page = await pdf.getPage(i);
+                        const content = await page.getTextContent();
+                        text += content.items.map(s => s.str).join(" ") + "\n";
+                    }
+                    attachedFile.data = text;
+                    attachedFile.type = 'pdf';
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        });
+
+        const handleSend = async () => {
+            const input = document.getElementById('userInput');
+            const text = input.value.trim();
+            if (!text && !attachedFile.data) return;
+
+            setLoading(true);
+            try {
+                const systemPrompt = `You are a professional financial advisor. Analyze and return JSON: { "title": "...", "summary": "...", "metrics": [{"label": "...", "value": "..."}], "chart": {"labels": ["..."], "values": [0]} }. Language: ${window.currentLang}.`;
+                let promptParts = [{ text: text || "Analyze this." }];
+                if (attachedFile.type === 'image') promptParts.push({ inlineData: { mimeType: "image/png", data: attachedFile.data } });
+                else if (attachedFile.type === 'pdf') promptParts[0].text += "\n\nContent:\n" + attachedFile.data;
+
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: promptParts }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        generationConfig: { responseMimeType: "application/json" }
+                    })
+                });
+
+                const result = await response.json();
+                const analysisData = JSON.parse(result.candidates[0].content.parts[0].text);
+                renderAnalysis(analysisData);
+                
+                if (userUid) {
+                    await addDoc(collection(db, 'artifacts', appId, 'users', userUid, 'reports'), { ...analysisData, timestamp: serverTimestamp() });
+                }
+                input.value = "";
+                window.clearFiles();
+            } catch (err) { console.error(err); } finally { setLoading(false); }
+        };
+
+        document.getElementById('sendBtn').onclick = handleSend;
+        document.getElementById('userInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+        });
+
+        function renderAnalysis(data) {
+            const out = document.getElementById('chat-output');
+            document.getElementById('welcome-card')?.classList.add('hidden');
+            const id = 'chart-' + Date.now();
+            const div = document.createElement('div');
+            div.className = "premium-card p-8 shadow-xl fade-in mb-8 border-l-4 border-amber-500";
+            div.innerHTML = `
+                <div class="flex justify-between items-start mb-6">
+                    <h3 class="text-2xl font-black text-slate-900">${data.title}</h3>
+                    <span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold uppercase">Report</span>
+                </div>
+                <p class="text-slate-600 mb-8 leading-relaxed">${data.summary}</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                    <div class="space-y-4">
+                        ${data.metrics.map(m => `
+                            <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                                <span class="text-slate-500 font-medium">${m.label}</span>
+                                <span class="text-slate-900 font-bold">${m.value}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="chart-container"><canvas id="${id}"></canvas></div>
+                </div>
+            `;
+            out.prepend(div);
+            if (data.chart) {
+                new Chart(document.getElementById(id), {
+                    type: 'doughnut',
+                    data: {
+                        labels: data.chart.labels,
+                        datasets: [{ data: data.chart.values, backgroundColor: ['#0f172a', '#f59e0b', '#64748b', '#94a3b8'], borderWidth: 0 }]
+                    },
+                    options: { maintainAspectRatio: false, cutout: '70%' }
+                });
+            }
+        }
+
+        function setLoading(loading) {
+            const btn = document.getElementById('sendBtn');
+            const icon = document.getElementById('sendIcon');
+            const loader = document.getElementById('loaderIcon');
+            btn.disabled = loading;
+            loading ? icon.classList.add('hidden') : icon.classList.remove('hidden');
+            loading ? loader.classList.remove('hidden') : loader.classList.add('hidden');
+        }
+
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 userUid = user.uid;
-                console.log("Authenticated as:", userUid);
-                
-                // جلب التقارير
                 const q = query(collection(db, 'artifacts', appId, 'users', userUid, 'reports'), orderBy('timestamp', 'desc'));
                 onSnapshot(q, (snap) => {
                     const grid = document.getElementById('reports-grid');
-                    if (!snap.empty) {
+                    if (snap.empty) grid.innerHTML = `<p class="text-slate-400">${translations[window.currentLang].noReports}</p>`;
+                    else {
                         grid.innerHTML = snap.docs.map(doc => `
-                            <div class="premium-card p-6 shadow-sm border border-slate-100">
-                                <h4 class="font-bold text-slate-900">${doc.data().title || 'تحليل مالي'}</h4>
-                                <p class="text-xs text-slate-400 mt-2">${doc.data().timestamp?.toDate().toLocaleString() || 'الآن'}</p>
+                            <div class="premium-card p-6 hover:shadow-lg hover:border-amber-400 cursor-pointer transition-all" onclick="showPage('ai-mentor')">
+                                <h4 class="font-bold text-slate-900">${doc.data().title}</h4>
+                                <p class="text-xs text-slate-400 mt-2">${doc.data().timestamp?.toDate().toLocaleDateString() || 'Just now'}</p>
                             </div>
                         `).join('');
                     }
                 });
-            } else {
-                signInAnonymously(auth);
-            }
+            } else signInAnonymously(auth);
         });
+
+        window.setLanguage('ar');
     </script>
 </body>
 </html>
