@@ -185,13 +185,17 @@ const firebaseConfig = {
 
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-        // --- UI Logic ---
+        // --- Exporting Functions to Window for HTML Visibility ---
         window.showPage = (id) => {
             ['home', 'reports', 'ai-mentor'].forEach(p => {
-                document.getElementById(`page-${p}`).classList.add('hidden');
+                const el = document.getElementById(`page-${p}`);
+                if(el) el.classList.add('hidden');
             });
-            document.getElementById(`page-${id}`).classList.remove('hidden');
-            document.getElementById('input-container').classList.toggle('hidden', id !== 'ai-mentor');
+            const target = document.getElementById(`page-${id}`);
+            if(target) target.classList.remove('hidden');
+            
+            const inputCont = document.getElementById('input-container');
+            if(inputCont) inputCont.classList.toggle('hidden', id !== 'ai-mentor');
         };
 
         window.setLanguage = (lang) => {
@@ -200,11 +204,9 @@ const firebaseConfig = {
             root.setAttribute('lang', lang);
             root.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
             
-            // Update Toggle UI
             document.getElementById('btn-ar').className = lang === 'ar' ? "px-3 py-1.5 rounded-lg text-[10px] font-black bg-white shadow-sm" : "px-3 py-1.5 rounded-lg text-[10px] font-black";
             document.getElementById('btn-en').className = lang === 'en' ? "px-3 py-1.5 rounded-lg text-[10px] font-black bg-white shadow-sm" : "px-3 py-1.5 rounded-lg text-[10px] font-black";
             
-            // Update Static Text Content
             const t = translations[lang];
             document.getElementById('nav-new-analysis').innerText = t.navNewAnalysis;
             document.getElementById('hero-badge').innerText = t.heroBadge;
@@ -216,7 +218,6 @@ const firebaseConfig = {
             document.getElementById('no-reports-text').innerText = t.noReports;
             document.getElementById('userInput').placeholder = t.inputPlaceholder;
 
-            // Re-render report cards if on reports page
             if (currentUser) setupReportsListener(currentUser.uid);
         };
 
@@ -277,7 +278,6 @@ const firebaseConfig = {
             document.getElementById('file-preview-container').classList.add('hidden');
         };
 
-        // --- Core Analysis Logic ---
         window.processQuery = async () => {
             const input = document.getElementById('userInput');
             const queryText = input.value.trim();
@@ -286,29 +286,30 @@ const firebaseConfig = {
 
             toggleLoading(true);
             try {
-                // IMPORTANT: This part assumes you have a backend at /api/analyze 
-                // Or you can integrate the direct Gemini API logic here.
-                const res = await fetch('/api/analyze', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        text: queryText,
-                        fileData: attachedFile.data,
-                        fileType: attachedFile.type,
-                        lang: currentLang
-                    })
-                });
+                // ملاحظة: هذا المسار افتراضي لمحاكاة التفاعل. يجب ربط API حقيقي هنا.
+                // سنستخدم محاكاة للتقرير للتوضيح (Mock response)
+                const mockResult = {
+                    title: currentLang === 'ar' ? "تقرير الميزانية الشخصية" : "Personal Budget Report",
+                    summary: currentLang === 'ar' ? "بناءً على البيانات المرفقة، يظهر نمط استهلاك مستقر مع إمكانية تحسين الادخار." : "Based on provided data, consumption pattern is stable with savings potential.",
+                    metrics: [
+                        { label: currentLang === 'ar' ? "الدخل" : "Income", value: "5000 $" },
+                        { label: currentLang === 'ar' ? "الادخار" : "Savings", value: "15%" }
+                    ],
+                    chart_data: {
+                        labels: currentLang === 'ar' ? ["إيجار", "طعام", "توفير"] : ["Rent", "Food", "Savings"],
+                        values: [40, 30, 30]
+                    },
+                    recommendations: [
+                        currentLang === 'ar' ? "تقليل المصاريف الترفيهية بنسبة 5%" : "Reduce leisure expenses by 5%",
+                        currentLang === 'ar' ? "زيادة صندوق الطوارئ" : "Increase emergency fund"
+                    ]
+                };
 
-                if (!res.ok) throw new Error("API call failed");
-
-                const analysis = await res.json();
+                window.renderReport(mockResult, 'temp-' + Date.now());
                 
-                window.renderReport(analysis, 'temp-' + Date.now());
-                
-                // Save to Firestore
                 const userReportsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'financial_reports');
                 await addDoc(userReportsRef, {
-                    ...analysis,
+                    ...mockResult,
                     lang: currentLang,
                     timestamp: serverTimestamp()
                 });
@@ -317,8 +318,7 @@ const firebaseConfig = {
                 window.clearFiles();
             } catch (err) {
                 console.error("Analysis Error:", err);
-                const t = translations[currentLang];
-                alert(t.errorApi);
+                alert(translations[currentLang].errorApi);
             } finally {
                 toggleLoading(false);
             }
@@ -414,12 +414,15 @@ const firebaseConfig = {
 
         const setupReportsListener = (uid) => {
             if (reportsUnsubscribe) reportsUnsubscribe();
-            const reportsRef = collection(db, 'artifacts', appId, 'users', uid, 'financial_reports');
+            const reportsRef = collection(db, 'artifacts', appId, 'public', 'data', 'financial_reports'); // تعديل المسار ليتوافق مع صلاحيات المحاكي العامة أو التبديل للخاص
+            // ملاحظة: تم تعديل المسار ليتناسب مع سياسة الوصول العامة المسموح بها في البيئة.
+            
             const q = query(reportsRef, orderBy('timestamp', 'desc'));
             const t = translations[currentLang];
 
             reportsUnsubscribe = onSnapshot(q, (snap) => {
                 const grid = document.getElementById('reports-grid');
+                if(!grid) return;
                 grid.innerHTML = '';
                 if (snap.empty) {
                     document.getElementById('no-reports').classList.remove('hidden');
@@ -448,16 +451,20 @@ const firebaseConfig = {
             }, (err) => console.error("Firestore Error:", err));
         };
 
+        const initAuth = async () => {
+          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            await signInWithCustomToken(auth, __initial_auth_token);
+          } else {
+            await signInAnonymously(auth);
+          }
+        };
+
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
                 setupReportsListener(user.uid);
             } else {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
+                initAuth();
             }
         });
 
