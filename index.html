@@ -4,118 +4,88 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>FinMentor Pro | المستشار المالي الذكي</title>
-    
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F59E0B' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' style='background-color:%230F172A;border-radius:4px'><path d='M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'></path></svg>">
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&family=Noto+Sans+Arabic:wght@400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700;900&display=swap');
         :root { --primary: #0F172A; --accent: #F59E0B; --bg: #F8FAFC; }
-        body { font-family: 'Noto Sans Arabic', 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); color: #1E293B; }
+        body { font-family: 'Noto Sans Arabic', sans-serif; background-color: var(--bg); color: #1E293B; }
         .premium-card { background: white; border-radius: 32px; border: 1px solid #f1f5f9; transition: all 0.3s ease; }
         .bidi-text { unicode-bidi: plaintext; text-align: start; }
         .chart-container { position: relative; height: 240px; width: 100%; }
         .celebration-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
         .fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        #userInput::-webkit-scrollbar { width: 4px; }
-        #userInput::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
     <header class="bg-white/80 backdrop-blur-xl sticky top-0 z-[100] border-b border-slate-100 px-6 py-4">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3 cursor-pointer group" onclick="window.showPage('home')">
+            <div class="flex items-center gap-3 cursor-pointer group" onclick="showPage('home')">
                 <div class="w-11 h-11 celebration-bg rounded-2xl flex items-center justify-center shadow-xl group-hover:rotate-6 transition-transform">
                     <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
                 </div>
                 <span class="text-xl font-black text-slate-900 tracking-tight">FinMentor <span class="text-amber-500">Pro</span></span>
             </div>
-            
             <div class="flex items-center gap-4">
                 <div class="lang-switch bg-slate-100 p-1 rounded-xl flex gap-1">
-                    <button id="btn-ar" onclick="window.setLanguage('ar')" class="px-3 py-1.5 rounded-lg text-[10px] font-black transition-all">AR</button>
-                    <button id="btn-en" onclick="window.setLanguage('en')" class="px-3 py-1.5 rounded-lg text-[10px] font-black transition-all">EN</button>
+                    <button id="btn-ar" onclick="setLanguage('ar')" class="px-3 py-1.5 rounded-lg text-[10px] font-black transition-all">AR</button>
+                    <button id="btn-en" onclick="setLanguage('en')" class="px-3 py-1.5 rounded-lg text-[10px] font-black transition-all">EN</button>
                 </div>
-                <button onclick="window.startNewSession()" id="nav-new-analysis" class="bg-slate-900 text-white px-5 py-2 rounded-full text-[11px] font-black shadow-lg hover:bg-amber-500 transition-colors">تحليل جديد</button>
+                <button onclick="startNewSession()" id="nav-new-analysis" class="bg-slate-900 text-white px-5 py-2 rounded-full text-[11px] font-black shadow-lg hover:bg-amber-500 transition-colors">تحليل جديد</button>
             </div>
         </div>
     </header>
 
     <main class="flex-grow">
-        <!-- Home Page -->
         <div id="page-home" class="max-w-7xl mx-auto p-6 md:p-12 space-y-12 fade-in">
             <section class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <div class="space-y-6 text-center lg:text-right" id="home-content">
+                <div class="space-y-6 text-center lg:text-right">
                     <div class="inline-flex items-center gap-2 bg-amber-50 text-amber-700 px-4 py-2 rounded-full text-xs font-black mx-auto lg:mx-0" id="hero-badge">نظام تحليل مالي ذكي</div>
                     <h1 class="text-4xl md:text-6xl font-black text-slate-900 leading-[1.2]" id="hero-title">ارتقِ بقراراتك المالية بقوة <span class="text-amber-500">الذكاء</span> الاصطناعي.</h1>
                     <p class="text-slate-500 text-lg font-medium leading-relaxed" id="hero-desc">حوّل بياناتك ومستنداتك المالية (PDF، صور) إلى تقارير استراتيجية دقيقة ومؤمنة تماماً.</p>
                     <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                        <button onclick="window.showPage('ai-mentor')" id="btn-start" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black shadow-xl hover:-translate-y-1 transition-all">ابدأ الاستشارة</button>
-                        <button onclick="window.showPage('reports')" id="btn-view-saved" class="bg-white border-2 border-slate-100 px-8 py-4 rounded-2xl font-black hover:bg-slate-50 transition-all">عرض التقارير المحفوظة</button>
-                    </div>
-                </div>
-                <div class="relative hidden lg:block">
-                    <div class="absolute -inset-4 bg-amber-400/20 blur-3xl rounded-full"></div>
-                    <div class="relative bg-white p-8 rounded-[3rem] shadow-2xl border border-slate-100">
-                         <div class="space-y-4">
-                             <div class="h-4 w-1/2 bg-slate-100 rounded-full"></div>
-                             <div class="h-32 bg-slate-50 rounded-3xl border border-dashed border-slate-200 flex items-center justify-center">
-                                 <svg class="w-12 h-12 text-amber-500/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                             </div>
-                             <div class="h-4 w-full bg-slate-50 rounded-full"></div>
-                         </div>
+                        <button onclick="showPage('ai-mentor')" id="btn-start" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black shadow-xl hover:-translate-y-1 transition-all">ابدأ الاستشارة</button>
+                        <button onclick="showPage('reports')" id="btn-view-saved" class="bg-white border-2 border-slate-100 px-8 py-4 rounded-2xl font-black hover:bg-slate-50 transition-all">عرض التقارير المحفوظة</button>
                     </div>
                 </div>
             </section>
         </div>
 
-        <!-- Reports Page -->
         <div id="page-reports" class="hidden max-w-7xl mx-auto p-6 md:p-12 fade-in">
-            <h2 class="text-3xl font-black text-slate-900 mb-8" id="vault-title">الخزنة المالية <span class="text-sm font-normal text-slate-400 block mt-1" id="vault-subtitle">تقاريرك محفوظة بشكل سحابي آمن</span></h2>
+            <h2 class="text-3xl font-black text-slate-900 mb-8" id="vault-title">الخزنة المالية</h2>
             <div id="reports-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
             <div id="no-reports" class="hidden text-center py-20 bg-white rounded-[2rem] border border-dashed border-slate-200">
-                <p class="text-slate-400 font-bold" id="no-reports-text">لا توجد تقارير حالياً. ابدأ استشارتك الأولى الآن!</p>
+                <p class="text-slate-400 font-bold" id="no-reports-text">لا توجد تقارير حالياً.</p>
             </div>
         </div>
 
-        <!-- AI Mentor Page -->
         <div id="page-ai-mentor" class="hidden max-w-4xl mx-auto p-6 md:p-12 pb-56 fade-in">
             <div id="chat-output" class="space-y-8"></div>
         </div>
     </main>
 
-    <!-- Input Bar -->
     <div id="input-container" class="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-3xl px-4 z-[110] hidden">
         <div class="bg-white/95 backdrop-blur-2xl rounded-[2rem] shadow-2xl border border-slate-200 overflow-hidden">
             <div id="file-preview-container" class="hidden p-4 border-b border-slate-100">
-                <div id="preview-box" class="relative inline-flex items-center gap-3 bg-slate-50 p-2 rounded-xl border border-slate-100">
-                    <img id="image-preview" src="" class="hidden h-12 w-12 object-cover rounded-lg border border-slate-100">
-                    <div id="pdf-icon-preview" class="hidden w-12 h-12 bg-red-100 text-red-600 items-center justify-center rounded-lg">
-                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path></svg>
-                    </div>
-                    <span id="file-name-text" class="text-xs font-bold text-slate-600 max-w-[150px] truncate"></span>
-                    <button onclick="window.clearFiles()" class="text-slate-400 hover:text-red-500 transition-colors px-2">✕</button>
+                <div class="relative inline-flex items-center gap-3 bg-slate-50 p-2 rounded-xl border border-slate-100">
+                    <img id="image-preview" src="" class="hidden h-12 w-12 object-cover rounded-lg">
+                    <span id="file-name-text" class="text-xs font-bold text-slate-600 truncate max-w-[150px]"></span>
+                    <button onclick="clearFiles()" class="text-slate-400 hover:text-red-500 px-2">✕</button>
                 </div>
             </div>
-
             <div class="flex items-end p-2 gap-2">
-                <button onclick="document.getElementById('fileInput').click()" class="w-12 h-12 flex items-center justify-center rounded-full text-slate-400 hover:text-amber-500 transition-colors">
+                <button onclick="document.getElementById('fileInput').click()" class="w-12 h-12 flex items-center justify-center rounded-full text-slate-400 hover:text-amber-500">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
                 </button>
-                <input type="file" id="fileInput" class="hidden" accept="image/*,application/pdf" onchange="window.handleFileUpload(event)">
-                <textarea id="userInput" placeholder="اسأل عن ميزانيتك، ارفع صورة أو ملف PDF..." 
-                    class="flex-grow bg-transparent border-none focus:ring-0 p-3 text-sm font-medium resize-none min-h-[52px]" rows="1"
-                    onkeydown="window.handleKeydown(event)"></textarea>
-                <button id="sendBtn" onclick="window.processQuery()" class="w-12 h-12 bg-slate-900 text-white rounded-full flex items-center justify-center hover:bg-amber-500 transition-all shrink-0 shadow-lg">
-                    <svg id="sendIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                <input type="file" id="fileInput" class="hidden" accept="image/*,application/pdf" onchange="handleFileUpload(event)">
+                <textarea id="userInput" placeholder="..." class="flex-grow bg-transparent border-none focus:ring-0 p-3 text-sm font-medium resize-none min-h-[52px]" rows="1"></textarea>
+                <button id="sendBtn" onclick="processQuery()" class="w-12 h-12 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-lg">
+                    <span id="sendIcon">➤</span>
                     <div id="loadingIcon" class="hidden w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                 </button>
             </div>
@@ -127,7 +97,6 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Configuration
         const firebaseConfig = // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyB_S2Iqjev6MPRccIy1-ykn4-PTZioc9Kw",
@@ -142,60 +111,16 @@ const firebaseConfig = {
         const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'fin-mentor-pro';
-        
+
         let currentUser = null;
         let currentLang = 'ar';
         let attachedFile = { data: null, type: null, name: "" };
-        let reportsUnsubscribe = null;
 
-        const translations = {
-            ar: {
-                navNewAnalysis: "تحليل جديد",
-                heroBadge: "نظام تحليل مالي ذكي",
-                heroTitle: 'ارتقِ بقراراتك المالية بقوة <span class="text-amber-500">الذكاء</span> الاصطناعي.',
-                heroDesc: "حوّل بياناتك ومستنداتك المالية (PDF، صور) إلى تقارير استراتيجية دقيقة ومؤمنة تماماً.",
-                btnStart: "ابدأ الاستشارة",
-                btnViewSaved: "عرض التقارير المحفوظة",
-                vaultTitle: 'الخزنة المالية <span class="text-sm font-normal text-slate-400 block mt-1">تقاريرك محفوظة بشكل سحابي آمن</span>',
-                noReports: "لا توجد تقارير حالياً. ابدأ استشارتك الأولى الآن!",
-                inputPlaceholder: "اسأل عن ميزانيتك، ارفع صورة أو ملف PDF...",
-                reportBadge: "التحليل الاستراتيجي الذكي",
-                recommendTitle: "توصيات المستشار المالي",
-                openReport: "فتح التقرير الذكي ←",
-                saving: "جاري الحفظ...",
-                errorApi: "حدث خطأ أثناء تحليل البيانات. تأكد من إعداد الـ API بشكل صحيح."
-            },
-            en: {
-                navNewAnalysis: "New Analysis",
-                heroBadge: "Smart Financial Analysis System",
-                heroTitle: 'Elevate your financial decisions with <span class="text-amber-500">AI</span> power.',
-                heroDesc: "Convert your financial data and documents (PDF, Images) into precise, secure strategic reports.",
-                btnStart: "Start Consultation",
-                btnViewSaved: "View Saved Reports",
-                vaultTitle: 'Financial Vault <span class="text-sm font-normal text-slate-400 block mt-1">Your reports are securely saved in the cloud</span>',
-                noReports: "No reports yet. Start your first consultation now!",
-                inputPlaceholder: "Ask about your budget, upload image or PDF...",
-                reportBadge: "Smart Strategic Analysis",
-                recommendTitle: "Financial Advisor Recommendations",
-                openReport: "Open Smart Report ←",
-                saving: "Saving...",
-                errorApi: "Error analyzing data. Please ensure API settings are correct."
-            }
-        };
-
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
-        // --- Exporting Functions to Window for HTML Visibility ---
+        // --- Export functions to window for Vercel visibility ---
         window.showPage = (id) => {
-            ['home', 'reports', 'ai-mentor'].forEach(p => {
-                const el = document.getElementById(`page-${p}`);
-                if(el) el.classList.add('hidden');
-            });
-            const target = document.getElementById(`page-${id}`);
-            if(target) target.classList.remove('hidden');
-            
-            const inputCont = document.getElementById('input-container');
-            if(inputCont) inputCont.classList.toggle('hidden', id !== 'ai-mentor');
+            ['home', 'reports', 'ai-mentor'].forEach(p => document.getElementById(`page-${p}`).classList.add('hidden'));
+            document.getElementById(`page-${id}`).classList.remove('hidden');
+            document.getElementById('input-container').classList.toggle('hidden', id !== 'ai-mentor');
         };
 
         window.setLanguage = (lang) => {
@@ -203,34 +128,13 @@ const firebaseConfig = {
             const root = document.getElementById('html-root');
             root.setAttribute('lang', lang);
             root.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
-            
             document.getElementById('btn-ar').className = lang === 'ar' ? "px-3 py-1.5 rounded-lg text-[10px] font-black bg-white shadow-sm" : "px-3 py-1.5 rounded-lg text-[10px] font-black";
             document.getElementById('btn-en').className = lang === 'en' ? "px-3 py-1.5 rounded-lg text-[10px] font-black bg-white shadow-sm" : "px-3 py-1.5 rounded-lg text-[10px] font-black";
-            
-            const t = translations[lang];
-            document.getElementById('nav-new-analysis').innerText = t.navNewAnalysis;
-            document.getElementById('hero-badge').innerText = t.heroBadge;
-            document.getElementById('hero-title').innerHTML = t.heroTitle;
-            document.getElementById('hero-desc').innerText = t.heroDesc;
-            document.getElementById('btn-start').innerText = t.btnStart;
-            document.getElementById('btn-view-saved').innerText = t.btnViewSaved;
-            document.getElementById('vault-title').innerHTML = t.vaultTitle;
-            document.getElementById('no-reports-text').innerText = t.noReports;
-            document.getElementById('userInput').placeholder = t.inputPlaceholder;
-
-            if (currentUser) setupReportsListener(currentUser.uid);
         };
 
-        window.startNewSession = () => { 
-            document.getElementById('chat-output').innerHTML = ''; 
-            window.showPage('ai-mentor'); 
-        };
-
-        window.handleKeydown = (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                window.processQuery();
-            }
+        window.startNewSession = () => {
+            document.getElementById('chat-output').innerHTML = '';
+            window.showPage('ai-mentor');
         };
 
         window.handleFileUpload = async (e) => {
@@ -239,23 +143,17 @@ const firebaseConfig = {
             document.getElementById('file-preview-container').classList.remove('hidden');
             document.getElementById('file-name-text').innerText = file.name;
             attachedFile.name = file.name;
-            
+
+            const reader = new FileReader();
             if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    attachedFile.data = event.target.result.split(',')[1];
+                reader.onload = (ev) => {
+                    attachedFile.data = ev.target.result.split(',')[1];
                     attachedFile.type = 'image';
-                    document.getElementById('image-preview').src = event.target.result;
+                    document.getElementById('image-preview').src = ev.target.result;
                     document.getElementById('image-preview').classList.remove('hidden');
-                    document.getElementById('pdf-icon-preview').classList.add('hidden');
                 };
                 reader.readAsDataURL(file);
             } else if (file.type === 'application/pdf') {
-                document.getElementById('pdf-icon-preview').classList.remove('hidden');
-                document.getElementById('pdf-icon-preview').classList.add('flex');
-                document.getElementById('image-preview').classList.add('hidden');
-                
-                const reader = new FileReader();
                 reader.onload = async function() {
                     const typedarray = new Uint8Array(this.result);
                     const pdf = await pdfjsLib.getDocument(typedarray).promise;
@@ -267,6 +165,7 @@ const firebaseConfig = {
                     }
                     attachedFile.data = fullText;
                     attachedFile.type = 'pdf';
+                    document.getElementById('image-preview').classList.add('hidden');
                 };
                 reader.readAsArrayBuffer(file);
             }
@@ -286,81 +185,51 @@ const firebaseConfig = {
 
             toggleLoading(true);
             try {
-                // ملاحظة: هذا المسار افتراضي لمحاكاة التفاعل. يجب ربط API حقيقي هنا.
-                // سنستخدم محاكاة للتقرير للتوضيح (Mock response)
-                const mockResult = {
-                    title: currentLang === 'ar' ? "تقرير الميزانية الشخصية" : "Personal Budget Report",
-                    summary: currentLang === 'ar' ? "بناءً على البيانات المرفقة، يظهر نمط استهلاك مستقر مع إمكانية تحسين الادخار." : "Based on provided data, consumption pattern is stable with savings potential.",
-                    metrics: [
-                        { label: currentLang === 'ar' ? "الدخل" : "Income", value: "5000 $" },
-                        { label: currentLang === 'ar' ? "الادخار" : "Savings", value: "15%" }
-                    ],
-                    chart_data: {
-                        labels: currentLang === 'ar' ? ["إيجار", "طعام", "توفير"] : ["Rent", "Food", "Savings"],
-                        values: [40, 30, 30]
-                    },
-                    recommendations: [
-                        currentLang === 'ar' ? "تقليل المصاريف الترفيهية بنسبة 5%" : "Reduce leisure expenses by 5%",
-                        currentLang === 'ar' ? "زيادة صندوق الطوارئ" : "Increase emergency fund"
-                    ]
-                };
-
-                window.renderReport(mockResult, 'temp-' + Date.now());
-                
-                const userReportsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'financial_reports');
-                await addDoc(userReportsRef, {
-                    ...mockResult,
-                    lang: currentLang,
-                    timestamp: serverTimestamp()
+                const res = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        text: queryText,
+                        fileData: attachedFile.data,
+                        fileType: attachedFile.type,
+                        lang: currentLang
+                    })
                 });
+
+                if (!res.ok) throw new Error("API failed");
+                const analysis = await res.json();
+                
+                window.renderReport(analysis, 'rep-' + Date.now());
+
+                const userReportsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'financial_reports');
+                await addDoc(userReportsRef, { ...analysis, lang: currentLang, timestamp: serverTimestamp() });
 
                 input.value = '';
                 window.clearFiles();
             } catch (err) {
-                console.error("Analysis Error:", err);
-                alert(translations[currentLang].errorApi);
+                console.error(err);
+                alert("Error connecting to AI");
             } finally {
                 toggleLoading(false);
             }
         };
 
         window.renderReport = (data, id) => {
-            const t = translations[currentLang];
             const container = document.getElementById('chat-output');
             const wrapper = document.createElement('div');
-            wrapper.className = 'premium-card overflow-hidden shadow-xl border border-slate-100 mb-8 fade-in';
+            wrapper.className = 'premium-card p-8 bg-white bidi-text mb-8 fade-in';
             wrapper.innerHTML = `
-                <div id="content-${id}" class="p-8 md:p-12 bg-white bidi-text">
-                    <div class="flex justify-between items-start mb-8">
-                        <div>
-                            <span class="text-[10px] font-black text-amber-500 uppercase">${t.reportBadge}</span>
-                            <h2 class="text-3xl font-black text-slate-900 mt-1">${data.title}</h2>
-                        </div>
-                        <button onclick="window.downloadPDF('${id}', '${data.title}')" class="w-12 h-12 celebration-bg text-white rounded-2xl flex items-center justify-center hover:scale-105 transition-all shadow-lg">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        </button>
+                <div class="flex justify-between items-start mb-6">
+                    <h2 class="text-2xl font-black">${data.title}</h2>
+                    <button onclick="downloadPDF('${id}', '${data.title}')" class="p-2 bg-slate-100 rounded-lg">PDF</button>
+                </div>
+                <p class="text-slate-600 mb-6">${data.summary}</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        ${data.metrics.map(m => `<div class="bg-slate-50 p-3 rounded-xl flex justify-between"><b>${m.label}</b><span>${m.value}</span></div>`).join('')}
                     </div>
-                    <p class="text-slate-600 mb-10 leading-relaxed text-lg">${data.summary}</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                        <div class="space-y-4">
-                            ${data.metrics.map(m => `
-                                <div class="bg-slate-50 p-5 rounded-2xl flex justify-between items-center border border-slate-100 hover:border-amber-200 transition-colors">
-                                    <span class="text-slate-500 font-bold text-sm">${m.label}</span>
-                                    <span class="text-slate-900 font-black text-lg">${m.value}</span>
-                                </div>`).join('')}
-                        </div>
-                        <div class="bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100 flex justify-center">
-                            <canvas id="chart-${id}" class="chart-container"></canvas>
-                        </div>
-                    </div>
-                    <div class="mt-12">
-                        <h4 class="font-black text-slate-900 mb-6 text-xl">${t.recommendTitle}</h4>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            ${data.recommendations.map(r => `
-                                <div class="p-5 bg-slate-50 border border-slate-100 rounded-2xl text-sm text-slate-600 leading-relaxed">
-                                    <span class="text-amber-500 font-black ml-2">•</span> ${r}
-                                </div>`).join('')}
-                        </div>
+                    <div class="h-48 bg-slate-50 rounded-2xl flex items-center justify-center">
+                        <canvas id="chart-${id}"></canvas>
                     </div>
                 </div>
             `;
@@ -369,41 +238,27 @@ const firebaseConfig = {
         };
 
         window.downloadPDF = async (id, title) => {
-            const element = document.getElementById(`content-${id}`);
-            const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+            const element = document.getElementById(`content-${id}`) || document.querySelector(`#chat-output .premium-card`);
+            const canvas = await html2canvas(element);
             const imgData = canvas.toDataURL('image/png');
             const { jsPDF } = window.jspdf;
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const imgProps = pdf.getImageProperties(imgData);
-            const pdfWidth = pdf.internal.pageSize.getWidth();
-            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-            pdf.save(`FinMentor_${title}.pdf`);
+            const pdf = new jsPDF();
+            pdf.addImage(imgData, 'PNG', 10, 10, 190, 0);
+            pdf.save(`${title}.pdf`);
         };
 
         function initChart(id, chartData) {
             setTimeout(() => {
-                const canvas = document.getElementById(`chart-${id}`);
-                if (!canvas) return;
-                const ctx = canvas.getContext('2d');
+                const ctx = document.getElementById(`chart-${id}`).getContext('2d');
                 new Chart(ctx, {
                     type: 'doughnut',
                     data: {
                         labels: chartData.labels,
-                        datasets: [{
-                            data: chartData.values,
-                            backgroundColor: ['#0F172A', '#F59E0B', '#64748B', '#CBD5E1', '#E2E8F0'],
-                            borderWidth: 0
-                        }]
+                        datasets: [{ data: chartData.values, backgroundColor: ['#0F172A', '#F59E0B', '#64748B'] }]
                     },
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false, 
-                        plugins: { legend: { position: 'bottom', labels: { font: { family: currentLang === 'ar' ? 'Noto Sans Arabic' : 'Plus Jakarta Sans', size: 10 } } } },
-                        cutout: '70%'
-                    }
+                    options: { responsive: true, maintainAspectRatio: false }
                 });
-            }, 200);
+            }, 300);
         }
 
         function toggleLoading(isLoading) {
@@ -412,63 +267,37 @@ const firebaseConfig = {
             document.getElementById('sendBtn').disabled = isLoading;
         }
 
-        const setupReportsListener = (uid) => {
-            if (reportsUnsubscribe) reportsUnsubscribe();
-            const reportsRef = collection(db, 'artifacts', appId, 'public', 'data', 'financial_reports'); // تعديل المسار ليتوافق مع صلاحيات المحاكي العامة أو التبديل للخاص
-            // ملاحظة: تم تعديل المسار ليتناسب مع سياسة الوصول العامة المسموح بها في البيئة.
-            
-            const q = query(reportsRef, orderBy('timestamp', 'desc'));
-            const t = translations[currentLang];
-
-            reportsUnsubscribe = onSnapshot(q, (snap) => {
-                const grid = document.getElementById('reports-grid');
-                if(!grid) return;
-                grid.innerHTML = '';
-                if (snap.empty) {
-                    document.getElementById('no-reports').classList.remove('hidden');
-                    return;
-                }
-                document.getElementById('no-reports').classList.add('hidden');
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    const card = document.createElement('div');
-                    card.className = 'premium-card p-6 h-48 flex flex-col justify-between cursor-pointer hover:border-amber-400 group shadow-sm hover:shadow-lg transition-all';
-                    card.onclick = () => { 
-                        window.setLanguage(d.lang || 'ar'); 
-                        window.showPage('ai-mentor'); 
-                        window.renderReport(d, doc.id); 
-                    };
-                    const dateStr = d.timestamp ? new Date(d.timestamp.seconds*1000).toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US') : t.saving;
-                    card.innerHTML = `
-                        <div>
-                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${dateStr}</span>
-                            <h4 class="text-lg font-black text-slate-900 mt-2 line-clamp-2">${d.title}</h4>
-                        </div>
-                        <div class="text-amber-500 font-bold text-[10px] flex items-center gap-1 group-hover:gap-2 transition-all">${t.openReport}</div>
-                    `;
-                    grid.appendChild(card);
-                });
-            }, (err) => console.error("Firestore Error:", err));
-        };
-
-        const initAuth = async () => {
-          if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-            await signInWithCustomToken(auth, __initial_auth_token);
-          } else {
-            await signInAnonymously(auth);
-          }
-        };
-
         onAuthStateChanged(auth, async (user) => {
             if (user) {
                 currentUser = user;
                 setupReportsListener(user.uid);
             } else {
-                initAuth();
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
             }
         });
 
-        // Initialize App Language
+        const setupReportsListener = (uid) => {
+            const reportsRef = collection(db, 'artifacts', appId, 'users', uid, 'financial_reports');
+            onSnapshot(query(reportsRef, orderBy('timestamp', 'desc')), (snap) => {
+                const grid = document.getElementById('reports-grid');
+                grid.innerHTML = '';
+                if (snap.empty) document.getElementById('no-reports').classList.remove('hidden');
+                else document.getElementById('no-reports').classList.add('hidden');
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const card = document.createElement('div');
+                    card.className = 'premium-card p-6 h-32 flex flex-col justify-center cursor-pointer hover:border-amber-400';
+                    card.onclick = () => { window.showPage('ai-mentor'); window.renderReport(d, doc.id); };
+                    card.innerHTML = `<h4 class="font-black">${d.title}</h4><span class="text-xs text-slate-400">View Report</span>`;
+                    grid.appendChild(card);
+                });
+            });
+        };
+
         window.setLanguage('ar');
     </script>
 </body>
