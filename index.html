@@ -26,7 +26,6 @@
         .premium-card { background: white; border-radius: 32px; border: 1px solid #f1f5f9; transition: all 0.3s ease; }
         .bidi-text { unicode-bidi: plaintext; text-align: start; }
         .celebration-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
-
         .fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
@@ -58,12 +57,13 @@
             padding: 40px;
         }
 
-        .shimmer {
-            background: linear-gradient(90deg, #f1f5f9 25%, #f8fafc 50%, #f1f5f9 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
+        .chat-bubble-user {
+            background: #f1f5f9;
+            border-radius: 20px 20px 0 20px;
+            padding: 1rem 1.5rem;
+            align-self: flex-start;
+            max-width: 80%;
         }
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -90,6 +90,7 @@
     </header>
 
     <main class="flex-grow pb-32">
+        <!-- Home Page -->
         <div id="page-home" class="max-w-7xl mx-auto p-6 md:p-12 space-y-12">
             <section class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
                 <div class="space-y-6">
@@ -101,37 +102,23 @@
                         <button id="btn-view-reports" onclick="showPage('reports')" class="bg-white border-2 border-slate-100 px-8 py-4 rounded-2xl font-black hover:bg-slate-50 transition-all"></button>
                     </div>
                 </div>
-                <div class="hidden lg:block relative">
-                    <div class="absolute inset-0 bg-amber-500/10 blur-3xl rounded-full"></div>
-                    <div class="relative premium-card p-10 rotate-2 bg-white/50 backdrop-blur border-slate-200">
-                         <div class="flex items-center gap-4 mb-6">
-                            <div class="w-12 h-12 rounded-full bg-slate-100 shimmer"></div>
-                            <div class="space-y-2">
-                                <div class="h-4 w-32 bg-slate-100 shimmer rounded"></div>
-                                <div class="h-3 w-20 bg-slate-100 shimmer rounded"></div>
-                            </div>
-                         </div>
-                         <div class="space-y-4">
-                            <div class="h-4 w-full bg-slate-100 shimmer rounded"></div>
-                            <div class="h-4 w-5/6 bg-slate-100 shimmer rounded"></div>
-                            <div class="h-4 w-4/6 bg-slate-100 shimmer rounded"></div>
-                         </div>
-                    </div>
-                </div>
             </section>
         </div>
 
+        <!-- Reports Archive -->
         <div id="page-reports" class="hidden max-w-7xl mx-auto p-6 md:p-12">
             <h2 id="reports-title" class="text-3xl font-black text-slate-900 mb-8"></h2>
             <div id="reports-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
-            <div id="no-reports" class="text-center py-20 text-slate-400 font-bold"></div>
+            <div id="no-reports" class="hidden text-center py-20 text-slate-400 font-bold"></div>
         </div>
 
+        <!-- AI Mentor Chat -->
         <div id="page-ai-mentor" class="hidden max-w-4xl mx-auto p-6 md:p-12">
-            <div id="chat-output" class="space-y-8"></div>
+            <div id="chat-output" class="flex flex-col gap-8"></div>
         </div>
     </main>
 
+    <!-- Input Area -->
     <div id="input-container" class="floating-input-area hidden">
         <div class="glass-panel rounded-[2rem] overflow-hidden">
             <div id="attachment-preview-container" class="hidden p-4 border-b border-slate-100 fade-in bg-slate-50/50">
@@ -167,26 +154,36 @@
 
     <div id="pdf-render-vault"></div>
 
-    <!-- Firebase SDK Implementation -->
+    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, collection, onSnapshot, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
 
-        // Configuration from Environment Variables
-        const firebaseConfig = JSON.parse(__firebase_config);
+        // Configuration
+        const firebaseConfig = // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyB_S2Iqjev6MPRccIy1-ykn4-PTZioc9Kw",
+  authDomain: "finmentorai-app.firebaseapp.com",
+  projectId: "finmentorai-app",
+  storageBucket: "finmentorai-app.firebasestorage.app",
+  messagingSenderId: "238569893906",
+  appId: "1:238569893906:web:ce0714ffc2251ba30ea8cb",
+  measurementId: "G-FRCC6WR869"
+};
+        const appId = window.__app_id || 'finmentor-pro';
+        
+        // Init
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'finmentor-pro-global';
-        const apiKey = ""; // Gemini API Key provided by system
-
-        // Global State
+        
         let currentUser = null;
         let localReports = [];
         let currentLang = 'ar';
         let attachedFile = { base64: null, type: null, name: null };
 
+        // i18n
         const i18n = {
             ar: {
                 newAnalysis: "تحليل جديد",
@@ -196,7 +193,7 @@
                 btnStart: "ابدأ الآن",
                 btnReports: "التقارير السابقة",
                 reportsTitle: "خزانة التقارير",
-                noReports: "لا توجد تقارير محفوظة حتى الآن.",
+                noReports: "لا توجد تقارير سابقة محفوظة.",
                 placeholder: "اطرح سؤالك المالي هنا...",
                 smartReport: "التقرير الذكي",
                 stratRec: "التوصيات الاستراتيجية",
@@ -210,7 +207,7 @@
                 btnStart: "Get Started",
                 btnReports: "Saved Reports",
                 reportsTitle: "Report Vault",
-                noReports: "No reports found in your vault.",
+                noReports: "No saved reports found.",
                 placeholder: "Ask your financial question...",
                 smartReport: "Smart Report",
                 stratRec: "Strategic Recommendations",
@@ -218,12 +215,12 @@
             }
         };
 
-        // Navigation
+        // UI Management
         window.showPage = (id) => {
             ['home', 'reports', 'ai-mentor'].forEach(p => document.getElementById(`page-${p}`).classList.add('hidden'));
             document.getElementById(`page-${id}`).classList.remove('hidden');
             document.getElementById('input-container').classList.toggle('hidden', id !== 'ai-mentor');
-            if(id === 'reports') renderReportsGrid();
+            if (id === 'reports') renderReportsGrid();
         };
 
         window.setLanguage = (lang) => {
@@ -239,160 +236,125 @@
             document.getElementById('reports-title').textContent = t.reportsTitle;
             document.getElementById('no-reports').textContent = t.noReports;
             document.getElementById('userInput').placeholder = t.placeholder;
-            
-            // Highlight active button
-            document.getElementById('btn-ar').className = `px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${lang === 'ar' ? 'bg-white shadow-sm' : ''}`;
-            document.getElementById('btn-en').className = `px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${lang === 'en' ? 'bg-white shadow-sm' : ''}`;
         };
 
         // Auth Logic
-        const handleAuth = async () => {
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
-        };
-
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
-                subscribeToReports();
+                loadReports();
             } else {
-                handleAuth();
+                signInAnonymously(auth);
             }
         });
 
-        // Firestore Real-time Sync (RULE 1 & 2)
-        const subscribeToReports = () => {
+        // Load Persistent Reports
+        function loadReports() {
             if (!currentUser) return;
-            const reportsPath = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'reports');
-            
-            // Simple query as per RULE 2
-            onSnapshot(reportsPath, (snapshot) => {
-                localReports = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
+            const q = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'reports');
+            onSnapshot(q, (snapshot) => {
+                localReports = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderReportsGrid();
-            }, (error) => console.error("Firestore Error:", error));
-        };
+            }, (err) => console.error("Firestore Error:", err));
+        }
 
-        const renderReportsGrid = () => {
+        function renderReportsGrid() {
             const grid = document.getElementById('reports-grid');
-            const empty = document.getElementById('no-reports');
+            const noRep = document.getElementById('no-reports');
             grid.innerHTML = '';
-
+            
             if (localReports.length === 0) {
-                empty.classList.remove('hidden');
-                return;
+                noRep.classList.remove('hidden');
+            } else {
+                noRep.classList.add('hidden');
+                localReports.forEach(rep => {
+                    const card = document.createElement('div');
+                    card.className = "premium-card p-6 hover:shadow-lg cursor-pointer bidi-text";
+                    card.onclick = () => {
+                        showPage('ai-mentor');
+                        renderReportUI(rep, rep.id);
+                    };
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-[10px] font-black text-amber-500 uppercase">${rep.lang === 'ar' ? 'تقرير' : 'REPORT'}</span>
+                            <span class="text-[10px] text-slate-400 font-bold">${new Date(rep.createdAt?.seconds * 1000).toLocaleDateString()}</span>
+                        </div>
+                        <h3 class="text-lg font-black text-slate-900 mb-2 truncate">${rep.title}</h3>
+                        <p class="text-sm text-slate-500 line-clamp-2">${rep.summary}</p>
+                    `;
+                    grid.appendChild(card);
+                });
             }
-            empty.classList.add('hidden');
+        }
 
-            // Sort in memory (Rule 2)
-            const sorted = [...localReports].sort((a,b) => {
-                const tA = a.createdAt?.seconds || 0;
-                const tB = b.createdAt?.seconds || 0;
-                return tB - tA;
-            });
-
-            sorted.forEach(rep => {
-                const date = rep.createdAt ? new Date(rep.createdAt.seconds * 1000).toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US') : '';
-                const card = document.createElement('div');
-                card.className = "premium-card p-6 cursor-pointer hover:border-amber-200 hover:shadow-md transition-all group";
-                card.onclick = () => {
-                    window.showPage('ai-mentor');
-                    document.getElementById('chat-output').innerHTML = ''; // Clear for focused view
-                    renderReportUI(rep, rep.id);
-                };
-                card.innerHTML = `
-                    <div class="flex justify-between items-start mb-4">
-                        <span class="text-[10px] font-black text-amber-500 uppercase tracking-widest">${rep.lang === 'ar' ? 'تقرير ذكي' : 'SMART REPORT'}</span>
-                        <span class="text-[10px] text-slate-400 font-bold">${date}</span>
-                    </div>
-                    <h3 class="font-bold text-slate-900 truncate group-hover:text-amber-600 transition-colors">${rep.title}</h3>
-                    <p class="text-xs text-slate-500 mt-2 line-clamp-2 leading-relaxed">${rep.summary}</p>
-                `;
-                grid.appendChild(card);
-            });
-        };
-
-        // AI Logic
+        // Processing Query (Serverless Fallback)
         window.processQuery = async () => {
             const text = document.getElementById('userInput').value.trim();
             if(!text && !attachedFile.base64) return;
             
             toggleLoading(true);
+            
+            // Add User Message to Chat
+            const userMsgHtml = `<div class="chat-bubble-user ml-auto bidi-text font-bold text-slate-700">${text || (currentLang === 'ar' ? "تحليل ملف" : "File Analysis")}</div>`;
+            document.getElementById('chat-output').insertAdjacentHTML('beforeend', userMsgHtml);
+
             try {
+                // IMPORTANT: Since we are in a single-file preview, 
+                // we simulate the /api/analyze call by calling Gemini directly.
+                // In a production build, this would be: fetch('/api/analyze', { ... })
+                
+                const prompt = `${i18n[currentLang].systemPrompt} User Input: ${text}. Format as JSON: { "title": "str", "summary": "str", "metrics": [{"label":"str", "value":"str"}], "recommendations": ["str"], "chart_data": {"labels":["str"], "values":[number]} }`;
+                
                 const payload = {
-                    contents: [{ parts: [{ text: text || "Financial Data Analysis" }] }],
-                    systemInstruction: { 
-                        parts: [{ text: `${i18n[currentLang].systemPrompt} Format precisely as JSON: { "title": "str", "summary": "str", "metrics": [{"label":"str", "value":"str"}], "recommendations": ["str"], "chart_data": {"labels":["str"], "values":[number]} }` }] 
-                    },
+                    contents: [{ parts: [{ text: prompt }] }],
                     generationConfig: { responseMimeType: "application/json" }
                 };
 
-                if(attachedFile.base64) {
-                    payload.contents[0].parts.push({ 
-                        inlineData: { mimeType: "image/png", data: attachedFile.base64 } 
+                if (attachedFile.base64) {
+                    payload.contents[0].parts.push({ inlineData: { mimeType: "image/png", data: attachedFile.base64 } });
+                }
+
+                // In production, your Serverless Function would hold this API Key
+                const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const result = await resp.json();
+                const reportData = JSON.parse(result.candidates[0].content.parts[0].text);
+                
+                // Save to Firestore
+                if (currentUser) {
+                    await addDoc(collection(db, 'artifacts', appId, 'users', currentUser.uid, 'reports'), {
+                        ...reportData,
+                        lang: currentLang,
+                        createdAt: serverTimestamp()
                     });
                 }
 
-                // AI Fetch with Retry Logic (Exponential Backoff)
-                const fetchWithRetry = async (url, options, retries = 5, delay = 1000) => {
-                    try {
-                        const res = await fetch(url, options);
-                        if (!res.ok) throw new Error();
-                        return res;
-                    } catch (err) {
-                        if (retries === 0) throw err;
-                        await new Promise(r => setTimeout(r, delay));
-                        return fetchWithRetry(url, options, retries - 1, delay * 2);
-                    }
-                };
-
-                const response = await fetchWithRetry(
-                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`,
-                    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }
-                );
-
-                const result = await response.json();
-                const reportContent = JSON.parse(result.candidates[0].content.parts[0].text);
-                const reportId = 'rep-' + Date.now();
-
-                const reportData = {
-                    ...reportContent,
-                    lang: currentLang,
-                    createdAt: serverTimestamp(),
-                    userId: currentUser?.uid
-                };
-
-                // Save to Firestore (RULE 1)
-                if (currentUser) {
-                    await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'reports', reportId), reportData);
-                }
-
-                renderReportUI(reportData, reportId);
+                renderReportUI(reportData, 'temp-' + Date.now());
                 document.getElementById('userInput').value = '';
-                window.removeAttachment();
-            } catch (error) {
-                console.error("Analysis Error:", error);
-                const errorMsg = currentLang === 'ar' ? "عذراً، حدث خطأ أثناء التحليل. يرجى المحاولة لاحقاً." : "Sorry, an error occurred during analysis. Please try again later.";
-                showNotification(errorMsg);
+                removeAttachment();
+                
+            } catch (e) {
+                console.error(e);
             } finally {
                 toggleLoading(false);
             }
         };
 
-        const renderReportUI = (data, id) => {
-            const isRtl = (data.lang || currentLang) === 'ar';
-            const t = i18n[data.lang || currentLang];
+        function renderReportUI(data, id) {
+            const t = i18n[currentLang];
             const html = `
-                <div id="report-card-${id}" class="premium-card overflow-hidden shadow-xl fade-in bg-white mb-8 border-slate-100">
-                    <div class="p-8 md:p-12 bidi-text" dir="${isRtl ? 'rtl' : 'ltr'}">
-                        <div class="flex justify-between items-start mb-8 gap-4">
+                <div id="report-card-${id}" class="premium-card overflow-hidden shadow-xl fade-in bg-white w-full">
+                    <div class="p-8 md:p-12 bidi-text">
+                        <div class="flex justify-between items-start mb-8">
                             <div>
                                 <span class="text-[11px] font-black text-amber-500 uppercase tracking-widest block mb-2">${t.smartReport}</span>
                                 <h2 class="text-3xl font-black text-slate-900">${data.title}</h2>
                             </div>
-                            <button onclick="window.downloadPerfectPDF('${id}')" class="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center hover:bg-amber-500 transition-all shadow-lg shrink-0">
+                            <button onclick="downloadPerfectPDF('${id}')" class="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center hover:bg-amber-500 transition-all shadow-lg shrink-0">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4'></path></svg>
                             </button>
                         </div>
@@ -405,7 +367,7 @@
                                         <span class="text-slate-900 font-black">${m.value}</span>
                                     </div>`).join('')}
                             </div>
-                            <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex items-center justify-center min-h-[220px]">
+                            <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex items-center justify-center min-h-[200px]">
                                 <canvas id="chart-${id}"></canvas>
                             </div>
                         </div>
@@ -415,7 +377,7 @@
                                 ${t.stratRec}
                             </h4>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                ${data.recommendations.map(r => `<div class="p-4 bg-amber-50/50 rounded-xl text-sm text-slate-700 border border-amber-100/50 shadow-sm">${r}</div>`).join('')}
+                                ${data.recommendations.map(r => `<div class="p-4 bg-amber-50/50 rounded-xl text-sm text-slate-700 border border-amber-100/50">${r}</div>`).join('')}
                             </div>
                         </div>
                     </div>
@@ -423,12 +385,16 @@
             `;
             document.getElementById('chat-output').insertAdjacentHTML('beforeend', html);
             initChart(id, data.chart_data);
+        }
+
+        // Global Utility Functions linked to window for HTML access
+        window.toggleLoading = (isLoading) => {
+            document.getElementById('sendIcon').classList.toggle('hidden', isLoading);
+            document.getElementById('loadingIcon').classList.toggle('hidden', !isLoading);
         };
 
-        const initChart = (id, chartData, targetId = null) => {
-            const canvas = document.getElementById(targetId || `chart-${id}`);
-            if(!canvas) return;
-            const ctx = canvas.getContext('2d');
+        window.initChart = (id, chartData, targetId = null) => {
+            const ctx = document.getElementById(targetId || `chart-${id}`).getContext('2d');
             new Chart(ctx, {
                 type: 'doughnut',
                 data: {
@@ -439,12 +405,7 @@
                         borderWidth: 0
                     }]
                 },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { legend: { display: false } }, 
-                    cutout: '72%' 
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '70%' }
             });
         };
 
@@ -452,16 +413,15 @@
             const vault = document.getElementById('pdf-render-vault');
             const original = document.getElementById(`report-card-${id}`);
             const data = localReports.find(r => r.id === id) || { chart_data: { labels: [], values: [] } };
-            
+
             vault.innerHTML = original.innerHTML;
-            const btn = vault.querySelector('button');
-            if(btn) btn.remove();
+            vault.querySelector('button').remove();
             
             const clonedCanvas = vault.querySelector('canvas');
             clonedCanvas.id = `cloned-chart-${id}`;
             initChart(id, data.chart_data, clonedCanvas.id);
 
-            await new Promise(r => setTimeout(r, 800));
+            await new Promise(r => setTimeout(r, 600));
 
             try {
                 const canvas = await html2canvas(vault, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
@@ -470,9 +430,9 @@
                 const pdfWidth = 210;
                 const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
                 const pdf = new jsPDF('p', 'mm', [pdfWidth, pdfHeight]);
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
                 pdf.save(`FinMentor_Report_${id}.pdf`);
-            } catch (err) { console.error("PDF generation error:", err); } 
+            } catch (err) { console.error("PDF Fail:", err); } 
             finally { vault.innerHTML = ''; }
         };
 
@@ -491,34 +451,13 @@
         window.removeAttachment = () => {
             attachedFile = { base64: null, type: null, name: null };
             document.getElementById('attachment-preview-container').classList.add('hidden');
-            document.getElementById('fileInput').value = '';
         };
 
-        const toggleLoading = (isLoading) => {
-            document.getElementById('sendIcon').classList.toggle('hidden', isLoading);
-            document.getElementById('loadingIcon').classList.toggle('hidden', !isLoading);
-            document.getElementById('sendBtn').disabled = isLoading;
-        };
+        window.handleEnterKey = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); processQuery(); } };
+        window.startNewSession = () => { location.reload(); };
 
-        const showNotification = (msg) => {
-            const container = document.createElement('div');
-            container.className = "fixed top-24 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl z-[200] fade-in font-bold text-sm border border-slate-700";
-            container.textContent = msg;
-            document.body.appendChild(container);
-            setTimeout(() => {
-                container.style.opacity = '0';
-                setTimeout(() => container.remove(), 500);
-            }, 3500);
-        };
-
-        window.handleEnterKey = (e) => { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); window.processQuery(); } };
-        window.startNewSession = () => { 
-            window.showPage('ai-mentor'); 
-            document.getElementById('chat-output').innerHTML = ''; 
-        };
-
-        // Boot
-        window.setLanguage('ar');
+        // App Boot
+        setLanguage('ar');
     </script>
 </body>
 </html>
