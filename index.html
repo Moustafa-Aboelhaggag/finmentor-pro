@@ -3,433 +3,364 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>FinMentor Pro | المستشار المالي الذكي</title>
+    <title>FinMentor Pro | Financial Intelligence</title>
+    
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23F59E0B'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'></path></svg>">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&family=Noto+Sans+Arabic:wght@400;700;900&display=swap');
+        
         :root { --primary: #0F172A; --accent: #F59E0B; --bg: #F8FAFC; }
-        body { font-family: 'Noto Sans Arabic', sans-serif; background-color: var(--bg); color: #1E293B; overflow-x: hidden; }
-        .premium-card { background: white; border-radius: 32px; border: 1px solid #f1f5f9; transition: all 0.3s ease; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); }
+        body { 
+            font-family: 'Noto Sans Arabic', 'Plus Jakarta Sans', sans-serif; 
+            background-color: var(--bg); 
+            color: #1E293B;
+            overflow-x: hidden;
+        }
+        
+        .premium-card { background: white; border-radius: 32px; border: 1px solid #f1f5f9; transition: all 0.3s ease; }
         .bidi-text { unicode-bidi: plaintext; text-align: start; }
         .celebration-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
-        .fade-in { animation: fadeIn 0.5s ease-out forwards; }
+
+        .fade-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        textarea::-webkit-scrollbar { width: 0px; }
+        
+        .floating-input-area {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 48rem;
+            padding: 0 1rem;
+            z-index: 110;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(241, 245, 249, 0.8);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Essential for PDF Quality and Arabic Rendering */
+        #pdf-render-vault {
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            width: 800px;
+            background: white;
+            padding: 40px;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
     <header class="bg-white/80 backdrop-blur-xl sticky top-0 z-[100] border-b border-slate-100 px-6 py-4">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-3 cursor-pointer group" onclick="window.showPage('home')">
-                <div class="w-11 h-11 celebration-bg rounded-2xl flex items-center justify-center shadow-xl group-hover:rotate-6 transition-transform">
-                    <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+            <div class="flex items-center gap-8">
+                <div class="flex items-center gap-3 cursor-pointer group" onclick="showPage('home')">
+                    <div class="w-11 h-11 celebration-bg rounded-2xl flex items-center justify-center shadow-xl group-hover:rotate-6 transition-transform">
+                        <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'></path></svg>
+                    </div>
+                    <span class="text-xl font-black text-slate-900 tracking-tight">FinMentor <span class="text-amber-500">Pro</span></span>
                 </div>
-                <span class="text-xl font-black text-slate-900 tracking-tight">FinMentor <span class="text-amber-500">Pro</span></span>
             </div>
+            
             <div class="flex items-center gap-4">
                 <div class="lang-switch bg-slate-100 p-1 rounded-xl flex gap-1">
-                    <button id="btn-ar" onclick="window.setLanguage('ar')" class="px-3 py-1.5 rounded-lg text-[10px] font-black transition-all bg-white shadow-sm">AR</button>
-                    <button id="btn-en" onclick="window.setLanguage('en')" class="px-3 py-1.5 rounded-lg text-[10px] font-black transition-all">EN</button>
+                    <button id="btn-ar" onclick="setLanguage('ar')" class="px-3 py-1.5 rounded-lg text-[10px] font-black transition-all">AR</button>
+                    <button id="btn-en" onclick="setLanguage('en')" class="px-3 py-1.5 rounded-lg text-[10px] font-black transition-all">EN</button>
                 </div>
-                <button onclick="window.startNewSession()" id="nav-new-analysis" class="bg-slate-900 text-white px-5 py-2 rounded-full text-[11px] font-black shadow-lg hover:bg-amber-600 transition-colors">تحليل جديد</button>
+                <button id="nav-new-analysis" onclick="startNewSession()" class="bg-slate-900 text-white px-5 py-2 rounded-full text-[11px] font-black shadow-lg hover:bg-amber-500 transition-colors"></button>
             </div>
         </div>
     </header>
 
-    <main class="flex-grow">
-        <!-- الصفحة الرئيسية -->
-        <div id="page-home" class="max-w-7xl mx-auto p-6 md:p-12 space-y-12 fade-in">
-            <section class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center py-10">
-                <div class="space-y-6 text-center lg:text-right">
-                    <div class="inline-flex items-center gap-2 bg-amber-50 text-amber-700 px-4 py-2 rounded-full text-xs font-black mx-auto lg:mx-0">نظام تحليل مالي ذكي</div>
-                    <h1 class="text-4xl md:text-6xl font-black text-slate-900 leading-[1.2]">ارتقِ بقراراتك المالية بقوة <span class="text-amber-500">الذكاء</span> الاصطناعي.</h1>
-                    <p class="text-slate-500 text-lg font-medium leading-relaxed">حوّل بياناتك ومستنداتك المالية إلى تقارير استراتيجية دقيقة ومؤمنة تماماً.</p>
-                    <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-4">
-                        <button onclick="window.showPage('ai-mentor')" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black shadow-xl hover:-translate-y-1 transition-all">ابدأ الاستشارة</button>
-                        <button onclick="window.showPage('reports')" class="bg-white border-2 border-slate-100 px-8 py-4 rounded-2xl font-black hover:bg-slate-50 transition-all">التقارير المحفوظة</button>
+    <main class="flex-grow pb-32">
+        <div id="page-home" class="max-w-7xl mx-auto p-6 md:p-12 space-y-12">
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="space-y-6">
+                    <div id="hero-badge" class="inline-flex items-center gap-2 bg-amber-50 text-amber-700 px-4 py-2 rounded-full text-xs font-black"></div>
+                    <h1 id="hero-title" class="text-4xl md:text-6xl font-black text-slate-900 leading-[1.2]"></h1>
+                    <p id="hero-desc" class="text-slate-500 text-lg font-medium leading-relaxed"></p>
+                    <div class="flex gap-4">
+                        <button id="btn-start" onclick="showPage('ai-mentor')" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black shadow-xl hover:-translate-y-1 transition-all"></button>
+                        <button id="btn-view-reports" onclick="showPage('reports')" class="bg-white border-2 border-slate-100 px-8 py-4 rounded-2xl font-black hover:bg-slate-50 transition-all"></button>
                     </div>
-                </div>
-                <div class="relative hidden lg:block">
-                    <div class="absolute -inset-4 bg-amber-500/10 rounded-full blur-3xl"></div>
-                    <img src="https://images.unsplash.com/photo-1551288049-bb1c003f27a5?auto=format&fit=crop&q=80&w=800" class="relative rounded-[3rem] shadow-2xl rotate-2" alt="Dashboard Preview">
                 </div>
             </section>
         </div>
 
-        <!-- صفحة التقارير -->
-        <div id="page-reports" class="hidden max-w-7xl mx-auto p-6 md:p-12 fade-in">
-            <h2 class="text-3xl font-black text-slate-900 mb-8">الخزنة المالية</h2>
-            <div id="reports-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-            <div id="no-reports" class="hidden text-center py-20 bg-white rounded-[2rem] border border-dashed border-slate-200">
-                <p class="text-slate-400 font-bold">لا توجد تقارير حالياً في خزنتك.</p>
-            </div>
+        <div id="page-reports" class="hidden max-w-7xl mx-auto p-6 md:p-12">
+            <h2 id="reports-title" class="text-3xl font-black text-slate-900 mb-8"></h2>
+            <div id="reports-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+            <div id="no-reports" class="text-center py-20 text-slate-400 font-bold"></div>
         </div>
 
-        <!-- صفحة الدردشة والتحليل -->
-        <div id="page-ai-mentor" class="hidden max-w-4xl mx-auto p-6 md:p-12 pb-64 fade-in">
-            <div id="chat-output" class="space-y-8 min-h-[400px]">
-                <!-- رسالة ترحيب أولية -->
-                <div class="premium-card p-6 bg-amber-50 border-amber-100 text-slate-800">
-                    <p class="font-bold mb-2">مرحباً بك في FinMentor Pro</p>
-                    <p class="text-sm">يمكنك كتابة استفسارك المالي أو إرفاق ملف (صورة فاتورة، كشف حساب PDF) لتحليله فوراً.</p>
-                </div>
-            </div>
+        <div id="page-ai-mentor" class="hidden max-w-4xl mx-auto p-6 md:p-12">
+            <div id="chat-output" class="space-y-8"></div>
         </div>
     </main>
 
-    <!-- حاوية الإدخال الثابتة -->
-    <div id="input-container" class="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-3xl px-4 z-[110] hidden">
-        <div class="bg-white/95 backdrop-blur-2xl rounded-[2rem] shadow-2xl border border-slate-200 overflow-hidden">
-            <div id="file-preview-container" class="hidden p-4 border-b border-slate-100 bg-slate-50/50">
-                <div class="relative inline-flex items-center gap-3 bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
-                    <img id="image-preview" src="" class="hidden h-12 w-12 object-cover rounded-lg border border-slate-100">
-                    <div id="pdf-icon-preview" class="hidden w-12 h-12 bg-red-50 text-red-500 items-center justify-center rounded-lg font-bold text-[10px]">PDF</div>
-                    <span id="file-name-text" class="text-xs font-bold text-slate-600 truncate max-w-[150px]"></span>
-                    <button onclick="window.clearFiles()" class="text-slate-400 hover:text-red-500 px-2 text-lg">✕</button>
+    <div id="input-container" class="floating-input-area hidden">
+        <div class="glass-panel rounded-[2rem] overflow-hidden">
+            <div id="attachment-preview-container" class="hidden p-4 border-b border-slate-100 fade-in bg-slate-50/50">
+                <div class="relative inline-flex items-center gap-3 bg-white p-2.5 rounded-2xl border border-slate-200 shadow-sm">
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-amber-50">
+                        <svg class="w-5 h-5 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path></svg>
+                    </div>
+                    <span id="file-name-display" class="text-xs font-bold text-slate-700 truncate max-w-[150px]"></span>
+                    <button onclick="removeAttachment()" class="text-slate-400 hover:text-red-500 p-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
                 </div>
             </div>
-            <div class="flex items-end p-3 gap-2">
-                <button onclick="document.getElementById('fileInput').click()" class="w-12 h-12 flex items-center justify-center rounded-full text-slate-400 hover:text-amber-500 hover:bg-slate-50 transition-all">
+
+            <div class="flex items-end p-3 gap-3">
+                <button onclick="document.getElementById('fileInput').click()" class="w-12 h-12 flex items-center justify-center rounded-2xl text-slate-400 hover:text-amber-500 hover:bg-amber-50 transition-all shrink-0">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
                 </button>
-                <input type="file" id="fileInput" class="hidden" accept="image/*,application/pdf" onchange="window.handleFileUpload(event)">
-                <textarea id="userInput" placeholder="اسأل أي سؤال مالي هنا..." class="flex-grow bg-transparent border-none focus:ring-0 p-3 text-sm font-medium resize-none min-h-[52px] max-h-32" rows="1"></textarea>
-                <button id="sendBtn" onclick="window.processQuery()" class="w-12 h-12 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-lg hover:bg-amber-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                    <span id="sendIcon">➤</span>
+                <input type="file" id="fileInput" class="hidden" accept="image/*,application/pdf" onchange="handleFileUpload(event)">
+                
+                <textarea id="userInput" 
+                    class="flex-grow bg-transparent border-none focus:ring-0 p-3 text-sm font-medium resize-none min-h-[52px] max-h-40 py-4" 
+                    rows="1" 
+                    onkeydown="handleEnterKey(event)"></textarea>
+
+                <button id="sendBtn" onclick="processQuery()" class="w-12 h-12 celebration-bg text-white rounded-2xl flex items-center justify-center hover:shadow-lg transition-all shrink-0">
+                    <svg id="sendIcon" class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                     <div id="loadingIcon" class="hidden w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                 </button>
             </div>
         </div>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <!-- Container for PDF rendering -->
+    <div id="pdf-render-vault"></div>
 
-        // إعدادات Firebase
-        const firebaseConfig = JSON.parse(__firebase_config);
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'fin-mentor-pro-1';
-
-        let currentUser = null;
+    <script>
+        const apiKey = "";
+        let localReports = [];
         let currentLang = 'ar';
-        let attachedFile = { data: null, type: null, name: "" };
+        let attachedFile = { base64: null, type: null, name: null };
 
-        // --- وظائف التنقل ---
-        window.showPage = (id) => {
-            ['home', 'reports', 'ai-mentor'].forEach(p => {
-                const el = document.getElementById(`page-${p}`);
-                if (el) el.classList.add('hidden');
-            });
+        const i18n = {
+            ar: {
+                newAnalysis: "تحليل جديد",
+                heroBadge: "الذكاء المالي المتقدم",
+                heroTitle: "ارتقِ بقراراتك المالية بقوة <span class='text-amber-500'>الذكاء</span> الاصطناعي.",
+                heroDesc: "حول بياناتك المالية وتقاريرك إلى استراتيجيات نمو دقيقة وموثوقة.",
+                btnStart: "ابدأ الآن",
+                btnReports: "التقارير السابقة",
+                reportsTitle: "خزانة التقارير",
+                noReports: "لا توجد تقارير في هذه الجلسة.",
+                placeholder: "اطرح سؤالك المالي هنا...",
+                smartReport: "التقرير الذكي",
+                stratRec: "التوصيات الاستراتيجية",
+                systemPrompt: "أنت مستشار مالي رفيع المستوى. حلل المدخلات وقدم تقرير JSON دقيق. اللغة: العربية."
+            },
+            en: {
+                newAnalysis: "New Session",
+                heroBadge: "Advanced Financial AI",
+                heroTitle: "Elevate your financial decisions with <span class='text-amber-500'>AI</span> power.",
+                heroDesc: "Transform financial data into precise, actionable growth strategies.",
+                btnStart: "Get Started",
+                btnReports: "Saved Reports",
+                reportsTitle: "Report Vault",
+                noReports: "No reports found in this session.",
+                placeholder: "Ask your financial question...",
+                smartReport: "Smart Report",
+                stratRec: "Strategic Recommendations",
+                systemPrompt: "You are a top-tier financial advisor. Provide a precise JSON report. Language: English."
+            }
+        };
+
+        function showPage(id) {
+            ['home', 'reports', 'ai-mentor'].forEach(p => document.getElementById(`page-${p}`).classList.add('hidden'));
             document.getElementById(`page-${id}`).classList.remove('hidden');
             document.getElementById('input-container').classList.toggle('hidden', id !== 'ai-mentor');
-            window.scrollTo(0, 0);
-        };
+        }
 
-        window.setLanguage = (lang) => {
+        function setLanguage(lang) {
             currentLang = lang;
-            const root = document.getElementById('html-root');
-            root.setAttribute('lang', lang);
-            root.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+            const t = i18n[lang];
+            document.getElementById('html-root').setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+            document.getElementById('nav-new-analysis').textContent = t.newAnalysis;
+            document.getElementById('hero-badge').textContent = t.heroBadge;
+            document.getElementById('hero-title').innerHTML = t.heroTitle;
+            document.getElementById('hero-desc').textContent = t.heroDesc;
+            document.getElementById('btn-start').textContent = t.btnStart;
+            document.getElementById('btn-view-reports').textContent = t.btnReports;
+            document.getElementById('reports-title').textContent = t.reportsTitle;
+            document.getElementById('no-reports').textContent = t.noReports;
+            document.getElementById('userInput').placeholder = t.placeholder;
+        }
+
+        async function processQuery() {
+            const text = document.getElementById('userInput').value.trim();
+            if(!text && !attachedFile.base64) return;
             
-            document.getElementById('btn-ar').className = lang === 'ar' ? "px-3 py-1.5 rounded-lg text-[10px] font-black bg-white shadow-sm" : "px-3 py-1.5 rounded-lg text-[10px] font-black";
-            document.getElementById('btn-en').className = lang === 'en' ? "px-3 py-1.5 rounded-lg text-[10px] font-black bg-white shadow-sm" : "px-3 py-1.5 rounded-lg text-[10px] font-black";
-        };
-
-        window.startNewSession = () => {
-            window.showPage('ai-mentor');
-            document.getElementById('chat-output').innerHTML = `
-                <div class="premium-card p-6 bg-amber-50 border-amber-100 text-slate-800">
-                    <p class="font-bold mb-2">جلسة جديدة</p>
-                    <p class="text-sm">أنا مستعد لمساعدتك في تحليل بياناتك المالية الجديدة.</p>
-                </div>
-            `;
-        };
-
-        // --- معالجة الملفات ---
-        window.handleFileUpload = async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-
-            document.getElementById('file-preview-container').classList.remove('hidden');
-            document.getElementById('file-name-text').innerText = file.name;
-            attachedFile.name = file.name;
-
-            const reader = new FileReader();
-            if (file.type.startsWith('image/')) {
-                reader.onload = (ev) => {
-                    attachedFile.data = ev.target.result.split(',')[1];
-                    attachedFile.type = 'image';
-                    document.getElementById('image-preview').src = ev.target.result;
-                    document.getElementById('image-preview').classList.remove('hidden');
-                    document.getElementById('pdf-icon-preview').classList.add('hidden');
-                };
-                reader.readAsDataURL(file);
-            } else if (file.type === 'application/pdf') {
-                reader.onload = async function() {
-                    const typedarray = new Uint8Array(this.result);
-                    // معالجة النصوص من الـ PDF باستخدام pdf.js
-                    try {
-                        const pdf = await pdfjsLib.getDocument(typedarray).promise;
-                        let fullText = "";
-                        for (let i = 1; i <= pdf.numPages; i++) {
-                            const page = await pdf.getPage(i);
-                            const textContent = await page.getTextContent();
-                            fullText += textContent.items.map(s => s.str).join(" ") + "\n";
-                        }
-                        attachedFile.data = fullText;
-                        attachedFile.type = 'pdf';
-                        document.getElementById('image-preview').classList.add('hidden');
-                        document.getElementById('pdf-icon-preview').classList.remove('hidden');
-                        document.getElementById('pdf-icon-preview').style.display = 'flex';
-                    } catch(err) {
-                        console.error("PDF Parsing error:", err);
-                        alert("فشل في قراءة ملف PDF");
-                    }
-                };
-                reader.readAsArrayBuffer(file);
-            }
-        };
-
-        window.clearFiles = () => {
-            attachedFile = { data: null, type: null, name: "" };
-            document.getElementById('fileInput').value = "";
-            document.getElementById('file-preview-container').classList.add('hidden');
-        };
-
-        // --- إرسال وتحليل ---
-        window.processQuery = async () => {
-            const input = document.getElementById('userInput');
-            const queryText = input.value.trim();
-            if (!queryText && !attachedFile.data) return;
-            if (!currentUser) {
-                alert("يرجى الانتظار حتى اكتمال تسجيل الدخول");
-                return;
-            }
-
             toggleLoading(true);
             try {
-                // إرسال البيانات إلى الـ Serverless Function في المسار النسبي
-                const res = await fetch('/api/analyze', {
+                const payload = {
+                    contents: [{ parts: [{ text: text || "Analyze financial status" }] }],
+                    systemInstruction: { parts: [{ text: `${i18n[currentLang].systemPrompt} Format as JSON: { "title": "str", "summary": "str", "metrics": [{"label":"str", "value":"str"}], "recommendations": ["str"], "chart_data": {"labels":["str"], "values":[number]} }` }] },
+                    generationConfig: { responseMimeType: "application/json" }
+                };
+                if(attachedFile.base64 && attachedFile.type === 'image') {
+                    payload.contents[0].parts.push({ inlineData: { mimeType: "image/png", data: attachedFile.base64 } });
+                }
+
+                const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        text: queryText,
-                        fileData: attachedFile.data,
-                        fileType: attachedFile.type,
-                        lang: currentLang
-                    })
+                    body: JSON.stringify(payload)
                 });
-
-                if (!res.ok) throw new Error("API Connection Failed");
                 
-                const analysis = await res.json();
-                const reportId = 'rep-' + Date.now();
+                const data = await resp.json();
+                const report = JSON.parse(data.candidates[0].content.parts[0].text);
+                const id = 'rep-' + Date.now();
+                localReports.push({ ...report, id, lang: currentLang });
                 
-                // عرض التقرير فوراً في الواجهة
-                window.renderReport(analysis, reportId);
-
-                // حفظ التقرير في Firestore
-                const userReportsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'financial_reports');
-                await addDoc(userReportsRef, { 
-                    ...analysis, 
-                    lang: currentLang, 
-                    timestamp: serverTimestamp() 
-                });
-
-                input.value = '';
-                window.clearFiles();
-            } catch (err) {
-                console.error(err);
-                // رسالة خطأ داخل الواجهة بدلاً من alert
-                const container = document.getElementById('chat-output');
-                const errBox = document.createElement('div');
-                errBox.className = 'p-4 bg-red-50 text-red-600 rounded-2xl text-sm font-bold';
-                errBox.innerText = "عذراً، حدث خطأ أثناء الاتصال بالخادم. تأكد من إعداد /api/analyze بشكل صحيح.";
-                container.prepend(errBox);
-            } finally {
-                toggleLoading(false);
-            }
-        };
-
-        window.renderReport = (data, id) => {
-            const container = document.getElementById('chat-output');
-            const wrapper = document.createElement('div');
-            wrapper.id = `content-${id}`;
-            wrapper.className = 'premium-card p-8 bg-white bidi-text mb-8 fade-in relative overflow-hidden';
-            
-            // تصميم محتوى التقرير
-            wrapper.innerHTML = `
-                <div class="flex flex-col md:flex-row justify-between items-start gap-4 mb-6">
-                    <div>
-                        <div class="text-[10px] font-black uppercase text-amber-500 mb-1">التقرير الذكي</div>
-                        <h2 class="text-2xl font-black text-slate-900">${data.title || 'تحليل مالي'}</h2>
-                    </div>
-                    <button onclick="window.downloadPDF('${id}', '${data.title || 'Report'}')" class="flex items-center gap-2 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold hover:bg-amber-500 transition-colors">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1M7 10l5 5m0 0l5-5m-5 5V3"></path></svg>
-                        تحميل PDF
-                    </button>
-                </div>
-                <div class="prose prose-slate max-w-none mb-8">
-                    <p class="text-slate-600 leading-relaxed font-medium">${data.summary || ''}</p>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-                    <div class="space-y-3">
-                        ${(data.metrics || []).map(m => `
-                            <div class="bg-slate-50 border border-slate-100 p-4 rounded-2xl flex justify-between items-center">
-                                <span class="text-slate-500 text-sm font-bold">${m.label}</span>
-                                <span class="text-slate-900 font-black">${m.value}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div class="bg-slate-50 rounded-[2rem] p-6 h-64 flex flex-col items-center justify-center border border-slate-100">
-                        <canvas id="chart-${id}"></canvas>
-                    </div>
-                </div>
-                <div class="mt-8 pt-6 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="p-4 bg-green-50 rounded-2xl">
-                        <h4 class="text-green-700 text-xs font-black mb-2 uppercase">نصيحة استراتيجية</h4>
-                        <p class="text-green-900 text-sm font-medium">${data.recommendation || 'استمر في مراقبة التدفقات النقدية.'}</p>
-                    </div>
-                    <div class="p-4 bg-slate-900 rounded-2xl text-white">
-                        <h4 class="text-amber-400 text-xs font-black mb-2 uppercase">تنبيه المخاطر</h4>
-                        <p class="text-slate-300 text-sm">${data.risk_factor || 'لا توجد مخاطر فورية مكتشفة.'}</p>
-                    </div>
-                </div>
-            `;
-            container.prepend(wrapper);
-            initChart(id, data.chart_data);
-        };
-
-        window.downloadPDF = async (id, title) => {
-            const element = document.getElementById(`content-${id}`);
-            if (!element) return;
-            
-            try {
-                const canvas = await html2canvas(element, { scale: 2 });
-                const imgData = canvas.toDataURL('image/png');
-                const { jsPDF } = window.jspdf;
-                const pdf = new jsPDF('p', 'mm', 'a4');
-                const imgWidth = 190;
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
-                pdf.save(`${title.replace(/\s+/g, '_')}.pdf`);
-            } catch (err) {
-                console.error("PDF Export Error:", err);
-            }
-        };
-
-        function initChart(id, chartData) {
-            if (!chartData || !chartData.labels) return;
-            setTimeout(() => {
-                const canvas = document.getElementById(`chart-${id}`);
-                if (!canvas) return;
-                const ctx = canvas.getContext('2d');
-                new Chart(ctx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: chartData.labels,
-                        datasets: [{ 
-                            data: chartData.values, 
-                            backgroundColor: ['#0F172A', '#F59E0B', '#64748B', '#94A3B8'],
-                            borderWidth: 0,
-                            hoverOffset: 10
-                        }]
-                    },
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: 'bottom', labels: { font: { family: 'Noto Sans Arabic', size: 10 }, padding: 20 } }
-                        },
-                        cutout: '70%'
-                    }
-                });
-            }, 500);
+                renderReport(report, id);
+                document.getElementById('userInput').value = '';
+                removeAttachment();
+            } catch (e) { console.error(e); } finally { toggleLoading(false); }
         }
 
         function toggleLoading(isLoading) {
             document.getElementById('sendIcon').classList.toggle('hidden', isLoading);
             document.getElementById('loadingIcon').classList.toggle('hidden', !isLoading);
-            document.getElementById('sendBtn').disabled = isLoading;
-            document.getElementById('userInput').disabled = isLoading;
         }
 
-        // --- نظام المصادقة والمزامنة ---
-        const initAuth = async () => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (err) {
-                console.error("Auth Error:", err);
-            }
-        };
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user;
-                setupReportsListener(user.uid);
-            } else {
-                initAuth();
-            }
-        });
-
-        const setupReportsListener = (uid) => {
-            const reportsRef = collection(db, 'artifacts', appId, 'users', uid, 'financial_reports');
-            // استماع بسيط للتغيرات دون استعلامات معقدة
-            onSnapshot(query(reportsRef), (snap) => {
-                const grid = document.getElementById('reports-grid');
-                grid.innerHTML = '';
-                
-                if (snap.empty) {
-                    document.getElementById('no-reports').classList.remove('hidden');
-                    return;
-                }
-                
-                document.getElementById('no-reports').classList.add('hidden');
-                
-                // ترتيب محلي لتجنب تعقيدات الـ Indexing في Firestore
-                const docs = [];
-                snap.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
-                docs.sort((a, b) => (b.timestamp?.seconds || 0) - (a.timestamp?.seconds || 0));
-
-                docs.forEach(d => {
-                    const card = document.createElement('div');
-                    card.className = 'premium-card p-6 flex flex-col justify-between cursor-pointer hover:border-amber-400 hover:shadow-xl transition-all h-40';
-                    card.onclick = () => { 
-                        window.showPage('ai-mentor'); 
-                        window.renderReport(d, d.id); 
-                    };
-                    card.innerHTML = `
-                        <div>
-                            <div class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center mb-3">
-                                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+        function renderReport(data, id) {
+            const t = i18n[currentLang];
+            const html = `
+                <div id="report-card-${id}" class="premium-card overflow-hidden shadow-xl fade-in bg-white">
+                    <div class="p-8 md:p-12 bidi-text">
+                        <div class="flex justify-between items-start mb-8">
+                            <div>
+                                <span class="text-[11px] font-black text-amber-500 uppercase tracking-widest block mb-2">${t.smartReport}</span>
+                                <h2 class="text-3xl font-black text-slate-900">${data.title}</h2>
                             </div>
-                            <h4 class="font-black text-slate-900 line-clamp-1">${d.title}</h4>
-                            <p class="text-[10px] text-slate-400 mt-1">${d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleDateString('ar-EG') : 'الآن'}</p>
+                            <button onclick="downloadPerfectPDF('${id}')" class="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center hover:bg-amber-500 transition-all shadow-lg shrink-0">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4'></path></svg>
+                            </button>
                         </div>
-                        <span class="text-xs font-bold text-amber-500 flex items-center gap-1">عرض التفاصيل ←</span>
-                    `;
-                    grid.appendChild(card);
-                });
-            }, (err) => {
-                console.error("Firestore Listener Error:", err);
-            });
-        };
+                        <p class="text-slate-600 mb-8 leading-relaxed font-medium">${data.summary}</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div class="space-y-3">
+                                ${data.metrics.map(m => `
+                                    <div class="bg-slate-50 p-4 rounded-xl flex justify-between border border-slate-100">
+                                        <span class="text-slate-500 font-bold text-xs">${m.label}</span>
+                                        <span class="text-slate-900 font-black">${m.value}</span>
+                                    </div>`).join('')}
+                            </div>
+                            <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex items-center justify-center min-h-[200px]">
+                                <canvas id="chart-${id}"></canvas>
+                            </div>
+                        </div>
+                        <div class="pt-8 border-t border-slate-100">
+                            <h4 class="font-black text-slate-900 mb-6 flex items-center gap-2">
+                                <svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3z"></path></svg>
+                                ${t.stratRec}
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                ${data.recommendations.map(r => `<div class="p-4 bg-amber-50/50 rounded-xl text-sm text-slate-700 border border-amber-100/50">${r}</div>`).join('')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('chat-output').insertAdjacentHTML('beforeend', html);
+            initChart(id, data.chart_data);
+            // Auto-scroll disabled per request
+        }
 
-        // التشغيل الافتراضي
-        window.setLanguage('ar');
+        function initChart(id, chartData, targetId = null) {
+            const ctx = document.getElementById(targetId || `chart-${id}`).getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: chartData.labels,
+                    datasets: [{
+                        data: chartData.values,
+                        backgroundColor: ['#0F172A', '#F59E0B', '#64748B', '#CBD5E1'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '70%' }
+            });
+        }
+
+        async function downloadPerfectPDF(id) {
+            const vault = document.getElementById('pdf-render-vault');
+            const original = document.getElementById(`report-card-${id}`);
+            const data = localReports.find(r => r.id === id);
+
+            // Clone to vault
+            vault.innerHTML = original.innerHTML;
+            vault.querySelector('button').remove(); // Clean PDF UI
+            
+            // Fix Chart in Clone
+            const clonedCanvas = vault.querySelector('canvas');
+            clonedCanvas.id = `cloned-chart-${id}`;
+            initChart(id, data.chart_data, clonedCanvas.id);
+
+            await new Promise(r => setTimeout(r, 600)); // Wait for render
+
+            try {
+                const canvas = await html2canvas(vault, {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    backgroundColor: '#ffffff'
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                
+                // Dynamic dimensions to prevent multi-page overflow
+                const pdfWidth = 210;
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+                
+                const pdf = new jsPDF('p', 'mm', [pdfWidth, pdfHeight]);
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
+                pdf.save(`FinMentor_Report_${id}.pdf`);
+            } catch (err) {
+                console.error("PDF Fail:", err);
+            } finally {
+                vault.innerHTML = '';
+            }
+        }
+
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                attachedFile = { base64: ev.target.result.split(',')[1], type: 'image', name: file.name };
+                document.getElementById('attachment-preview-container').classList.remove('hidden');
+                document.getElementById('file-name-display').textContent = file.name;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeAttachment() {
+            attachedFile = { base64: null, type: null, name: null };
+            document.getElementById('attachment-preview-container').classList.add('hidden');
+        }
+
+        function handleEnterKey(e) { if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); processQuery(); } }
+        function startNewSession() { location.reload(); }
+        window.onload = () => setLanguage('ar');
     </script>
 </body>
 </html>
