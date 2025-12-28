@@ -2,492 +2,148 @@
 <html lang="ar" dir="rtl" id="html-root">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FinMentor Pro | Financial Intelligence</title>
-    
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23F59E0B'><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'></path></svg>">
-    
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&family=Noto+Sans+Arabic:wght@400;700;900&display=swap');
-        
-        :root { --primary: #0F172A; --accent: #F59E0B; --bg: #F8FAFC; }
-        body { 
-            font-family: 'Noto Sans Arabic', 'Plus Jakarta Sans', sans-serif; 
-            background-color: var(--bg); 
-            color: #1E293B;
-            overflow-x: hidden;
+        body {
+            font-family: 'Noto Sans Arabic', sans-serif;
+            background: #f8fafc;
         }
-        
-        .premium-card { background: white; border-radius: 32px; border: 1px solid #f1f5f9; transition: all 0.3s ease; }
-        .bidi-text { unicode-bidi: plaintext; text-align: start; }
-        .celebration-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
-
-        .fade-in { animation: fadeIn 0.5s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .floating-input-area {
-            position: fixed;
-            bottom: 2rem;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 100%;
-            max-width: 48rem;
-            padding: 0 1rem;
-            z-index: 110;
-        }
-
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(241, 245, 249, 0.8);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.1);
-        }
-
-        #pdf-render-vault {
-            position: absolute;
-            left: -9999px;
-            top: -9999px;
-            width: 800px;
-            background: white;
-            padding: 40px;
-        }
-
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
     </style>
 </head>
+
 <body class="min-h-screen flex flex-col">
 
-    <header class="bg-white/80 backdrop-blur-xl sticky top-0 z-[100] border-b border-slate-100 px-6 py-4">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-8">
-                <div class="flex items-center gap-3 cursor-pointer group" onclick="showPage('home')">
-                    <div class="w-11 h-11 celebration-bg rounded-2xl flex items-center justify-center shadow-xl group-hover:rotate-6 transition-transform">
-                        <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'></path></svg>
-                    </div>
-                    <span class="text-xl font-black text-slate-900 tracking-tight">FinMentor <span class="text-amber-500">Pro</span></span>
-                </div>
-            </div>
-            
-            <div class="flex items-center gap-4">
-                <div class="lang-switch bg-slate-100 p-1 rounded-xl flex gap-1">
-                    <button id="btn-ar" onclick="setLanguage('ar')" class="px-3 py-1.5 rounded-lg text-[10px] font-black transition-all">AR</button>
-                    <button id="btn-en" onclick="setLanguage('en')" class="px-3 py-1.5 rounded-lg text-[10px] font-black transition-all">EN</button>
-                </div>
-                <!-- تغيير الوظيفة للذهاب لصفحة التحليل مباشرة -->
-                <button id="nav-new-analysis" onclick="startNewAnalysis()" class="bg-slate-900 text-white px-5 py-2 rounded-full text-[11px] font-black shadow-lg hover:bg-amber-500 transition-colors"></button>
-            </div>
-        </div>
-    </header>
-
-    <main class="flex-grow pb-32">
-        <div id="page-home" class="max-w-7xl mx-auto p-6 md:p-12 space-y-12">
-            <section class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                <div class="space-y-6">
-                    <div id="hero-badge" class="inline-flex items-center gap-2 bg-amber-50 text-amber-700 px-4 py-2 rounded-full text-xs font-black"></div>
-                    <h1 id="hero-title" class="text-4xl md:text-6xl font-black text-slate-900 leading-[1.2]"></h1>
-                    <p id="hero-desc" class="text-slate-500 text-lg font-medium leading-relaxed"></p>
-                    <div class="flex gap-4">
-                        <button id="btn-start" onclick="showPage('ai-mentor')" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black shadow-xl hover:-translate-y-1 transition-all"></button>
-                        <button id="btn-view-reports" onclick="showPage('reports')" class="bg-white border-2 border-slate-100 px-8 py-4 rounded-2xl font-black hover:bg-slate-50 transition-all"></button>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <div id="page-reports" class="hidden max-w-7xl mx-auto p-6 md:p-12">
-            <h2 id="reports-title" class="text-3xl font-black text-slate-900 mb-8"></h2>
-            <div id="reports-grid" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
-            <div id="no-reports" class="text-center py-20 text-slate-400 font-bold"></div>
-        </div>
-
-        <div id="page-ai-mentor" class="hidden max-w-4xl mx-auto p-6 md:p-12">
-            <div id="chat-output" class="space-y-8"></div>
-        </div>
-    </main>
-
-    <div id="input-container" class="floating-input-area hidden">
-        <div class="glass-panel rounded-[2rem] overflow-hidden">
-            <div id="attachment-preview-container" class="hidden p-4 border-b border-slate-100 fade-in bg-slate-50/50">
-                <div class="relative inline-flex items-center gap-3 bg-white p-2.5 rounded-2xl border border-slate-200 shadow-sm">
-                    <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-amber-50">
-                        <svg class="w-5 h-5 text-amber-600" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path></svg>
-                    </div>
-                    <span id="file-name-display" class="text-xs font-bold text-slate-700 truncate max-w-[150px]"></span>
-                    <button onclick="removeAttachment()" class="text-slate-400 hover:text-red-500 p-1">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
-                </div>
-            </div>
-
-            <div class="flex items-end p-3 gap-3">
-                <button onclick="document.getElementById('fileInput').click()" class="w-12 h-12 flex items-center justify-center rounded-2xl text-slate-400 hover:text-amber-500 hover:bg-amber-50 transition-all shrink-0">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                </button>
-                <input type="file" id="fileInput" class="hidden" accept="image/*" onchange="handleFileUpload(event)">
-                
-                <textarea id="userInput" 
-                    class="flex-grow bg-transparent border-none focus:ring-0 p-3 text-sm font-medium resize-none min-h-[52px] max-h-40 py-4" 
-                    rows="1" 
-                    onkeydown="handleEnterKey(event)"></textarea>
-
-                <button id="sendBtn" onclick="processQuery()" class="w-12 h-12 celebration-bg text-white rounded-2xl flex items-center justify-center hover:shadow-lg transition-all shrink-0">
-                    <svg id="sendIcon" class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
-                    <div id="loadingIcon" class="hidden w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                </button>
-            </div>
-        </div>
+<main class="flex-grow pb-32">
+    <div id="page-ai-mentor" class="max-w-4xl mx-auto p-6">
+        <div id="chat-output" class="space-y-6"></div>
     </div>
+</main>
 
-    <div id="pdf-render-vault"></div>
+<div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-full max-w-3xl px-4">
+    <div class="bg-white border rounded-2xl shadow-xl p-3 flex gap-3 items-end">
+        <textarea id="userInput"
+                  class="flex-grow border-none resize-none focus:ring-0 p-3 text-sm"
+                  placeholder="اطرح سؤالك المالي هنا..."
+                  rows="1"
+                  onkeydown="handleEnterKey(event)"></textarea>
 
-    <script>
-        const apiKey = ""; // مفتاح الوصول يتم تزويده تلقائياً
-        let localReports = [];
-        let currentLang = 'ar';
-        let attachedFile = { base64: null, type: null, name: null };
+        <button onclick="processQuery()"
+                id="sendBtn"
+                class="bg-slate-900 text-white w-12 h-12 rounded-xl flex items-center justify-center">
+            <span id="sendIcon">➤</span>
+            <span id="loadingIcon" class="hidden animate-spin">⏳</span>
+        </button>
+    </div>
+</div>
 
-        const i18n = {
-            ar: {
-                newAnalysis: "تحليل جديد",
-                heroBadge: "الذكاء المالي المتقدم",
-                heroTitle: "ارتقِ بقراراتك المالية بقوة <span class='text-amber-500'>الذكاء</span> الاصطناعي.",
-                heroDesc: "حول بياناتك المالية وتقاريرك إلى استراتيجيات نمو دقيقة وموثوقة.",
-                btnStart: "ابدأ الآن",
-                btnReports: "التقارير السابقة",
-                reportsTitle: "خزانة التقارير",
-                noReports: "لا توجد تقارير في هذه الجلسة.",
-                placeholder: "اطرح سؤالك المالي هنا...",
-                smartReport: "التقرير الذكي",
-                stratRec: "التوصيات الاستراتيجية",
-                systemPrompt: "أنت مستشار مالي رفيع المستوى. حلل المدخلات وقدم تقرير JSON دقيق باللغة العربية. يجب أن يكون الرد JSON فقط."
-            },
-            en: {
-                newAnalysis: "New Session",
-                heroBadge: "Advanced Financial AI",
-                heroTitle: "Elevate your financial decisions with <span class='text-amber-500'>AI</span> power.",
-                heroDesc: "Transform financial data into precise, actionable growth strategies.",
-                btnStart: "Get Started",
-                btnReports: "Saved Reports",
-                reportsTitle: "Report Vault",
-                noReports: "No reports found in this session.",
-                placeholder: "Ask your financial question...",
-                smartReport: "Smart Report",
-                stratRec: "Strategic Recommendations",
-                systemPrompt: "You are a top-tier financial advisor. Provide a precise JSON report in English. Response must be JSON only."
-            }
-        };
+<script>
+    let currentLang = "ar";
+    let localReports = [];
 
-        function showPage(id) {
-            ['home', 'reports', 'ai-mentor'].forEach(p => document.getElementById(`page-${p}`).classList.add('hidden'));
-            document.getElementById(`page-${id}`).classList.remove('hidden');
-            document.getElementById('input-container').classList.toggle('hidden', id !== 'ai-mentor');
-            if(id === 'reports') renderReportsGrid();
-            window.scrollTo(0,0);
+    const i18n = {
+        ar: {
+            systemPrompt: "أنت مستشار مالي محترف. قدم تقرير JSON فقط."
+        }
+    };
+
+    /* ===============================
+       الاتصال بالسيرفر (Vercel API)
+       =============================== */
+    async function fetchAI(payload) {
+        const response = await fetch("/api/ai", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error("AI request failed");
         }
 
-        function setLanguage(lang) {
-            currentLang = lang;
-            const t = i18n[lang];
-            document.getElementById('html-root').setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
-            document.getElementById('nav-new-analysis').textContent = t.newAnalysis;
-            document.getElementById('hero-badge').textContent = t.heroBadge;
-            document.getElementById('hero-title').innerHTML = t.heroTitle;
-            document.getElementById('hero-desc').textContent = t.heroDesc;
-            document.getElementById('btn-start').textContent = t.btnStart;
-            document.getElementById('btn-view-reports').textContent = t.btnReports;
-            document.getElementById('reports-title').textContent = t.reportsTitle;
-            document.getElementById('no-reports').textContent = t.noReports;
-            document.getElementById('userInput').placeholder = t.placeholder;
-            
-            document.getElementById('btn-ar').className = lang === 'ar' ? 'px-3 py-1.5 rounded-lg text-[10px] font-black bg-white shadow-sm text-slate-900' : 'px-3 py-1.5 rounded-lg text-[10px] font-black text-slate-400';
-            document.getElementById('btn-en').className = lang === 'en' ? 'px-3 py-1.5 rounded-lg text-[10px] font-black bg-white shadow-sm text-slate-900' : 'px-3 py-1.5 rounded-lg text-[10px] font-black text-slate-400';
-        }
+        return await response.json();
+    }
 
-        // الحل الجذري لمشكلة الاتصال: استخدام نموذج مستقر ومعالجة الأخطاء بشكل احترافي
-        async function fetchAI(payload, retries = 5) {
-            // استخدام الموديل المستقر المتاح في البيئة
-            const model = "gemini-2.5-flash-preview-09-2025";
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-            
-            for (let i = 0; i < retries; i++) {
-                try {
-                    const response = await fetch(url, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    
-                    if (response.ok) return await response.json();
-                    
-                    // إذا كان الخطأ بسبب ضغط الطلبات 429 أو خطأ مؤقت 500
-                    if (response.status === 429 || response.status >= 500) {
-                        const delay = Math.pow(2, i) * 1000;
-                        await new Promise(r => setTimeout(r, delay));
-                        continue;
+    async function processQuery() {
+        const input = document.getElementById("userInput");
+        const text = input.value.trim();
+        if (!text) return;
+
+        toggleLoading(true);
+
+        try {
+            const payload = {
+                contents: [
+                    {
+                        role: "user",
+                        parts: [{ text }]
                     }
-                    
-                    const errorData = await response.json();
-                    throw new Error(errorData.error?.message || "Connection Error");
-                } catch (e) {
-                    if (i === retries - 1) throw e;
-                    await new Promise(r => setTimeout(r, Math.pow(2, i) * 1000));
-                }
-            }
-        }
-
-        async function processQuery() {
-            const inputField = document.getElementById('userInput');
-            const text = inputField.value.trim();
-            if(!text && !attachedFile.base64) return;
-            
-            toggleLoading(true);
-            try {
-                const parts = [{ text: text || "الرجاء تحليل البيانات المالية المقدمة" }];
-                if(attachedFile.base64) {
-                    parts.push({ inlineData: { mimeType: "image/png", data: attachedFile.base64 } });
-                }
-
-                const payload = {
-                    contents: [{ role: "user", parts: parts }],
-                    systemInstruction: { 
-                        parts: [{ text: `${i18n[currentLang].systemPrompt} Format precisely as JSON. Schema: { "title": "string", "summary": "string", "metrics": [{"label":"string", "value":"string"}], "recommendations": ["string"], "chart_data": {"labels":["string"], "values":[number]} }` }] 
-                    },
-                    generationConfig: { 
-                        responseMimeType: "application/json"
-                    }
-                };
-
-                const data = await fetchAI(payload);
-                const rawResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                if(!rawResponse) throw new Error("Empty Response");
-
-                const report = JSON.parse(rawResponse);
-                const id = 'rep-' + Date.now();
-                localReports.push({ ...report, id, lang: currentLang, date: new Date().toLocaleDateString() });
-                
-                renderReport(report, id);
-                inputField.value = '';
-                removeAttachment();
-                
-                // التمرير لأسفل لرؤية النتيجة
-                setTimeout(() => {
-                    const el = document.getElementById(`report-card-${id}`);
-                    el.scrollIntoView({ behavior: 'smooth' });
-                }, 100);
-
-            } catch (e) { 
-                console.error("AI Error:", e);
-                showErrorMessage();
-            } finally { 
-                toggleLoading(false); 
-            }
-        }
-
-        function toggleLoading(isLoading) {
-            document.getElementById('sendIcon').classList.toggle('hidden', isLoading);
-            document.getElementById('loadingIcon').classList.toggle('hidden', !isLoading);
-            document.getElementById('sendBtn').disabled = isLoading;
-        }
-
-        function renderReport(data, id) {
-            const t = i18n[currentLang];
-            const html = `
-                <div id="report-card-${id}" class="premium-card overflow-hidden shadow-xl fade-in bg-white mb-8">
-                    <div class="p-8 md:p-12 bidi-text">
-                        <div class="flex justify-between items-start mb-8">
-                            <div>
-                                <span class="text-[11px] font-black text-amber-500 uppercase tracking-widest block mb-2">${t.smartReport}</span>
-                                <h2 class="text-3xl font-black text-slate-900">${data.title}</h2>
-                            </div>
-                            <button onclick="downloadPerfectPDF('${id}')" class="w-12 h-12 bg-slate-900 text-white rounded-2xl flex items-center justify-center hover:bg-amber-500 transition-all shadow-lg shrink-0">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4'></path></svg>
-                            </button>
-                        </div>
-                        <p class="text-slate-600 mb-8 leading-relaxed font-medium">${data.summary}</p>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                            <div class="space-y-3">
-                                ${data.metrics.map(m => `
-                                    <div class="bg-slate-50 p-4 rounded-xl flex justify-between border border-slate-100">
-                                        <span class="text-slate-500 font-bold text-xs">${m.label}</span>
-                                        <span class="text-slate-900 font-black">${m.value}</span>
-                                    </div>`).join('')}
-                            </div>
-                            <div class="bg-slate-50 p-6 rounded-3xl border border-slate-100 flex items-center justify-center min-h-[220px]">
-                                <canvas id="chart-${id}"></canvas>
-                            </div>
-                        </div>
-                        <div class="pt-8 border-t border-slate-100">
-                            <h4 class="font-black text-slate-900 mb-6 flex items-center gap-2">
-                                <svg class="w-5 h-5 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3z"></path></svg>
-                                ${t.stratRec}
-                            </h4>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                ${data.recommendations.map(r => `<div class="p-4 bg-amber-50/50 rounded-xl text-sm text-slate-700 border border-amber-100/50">${r}</div>`).join('')}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-            document.getElementById('chat-output').insertAdjacentHTML('beforeend', html);
-            initChart(id, data.chart_data);
-        }
-
-        function renderReportsGrid() {
-            const grid = document.getElementById('reports-grid');
-            const empty = document.getElementById('no-reports');
-            grid.innerHTML = '';
-            
-            if(localReports.length === 0) {
-                empty.classList.remove('hidden');
-                return;
-            }
-            
-            empty.classList.add('hidden');
-            localReports.forEach(rep => {
-                const card = `
-                    <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all cursor-pointer group" onclick="viewSpecificReport('${rep.id}')">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="w-10 h-10 rounded-xl bg-slate-900 flex items-center justify-center text-amber-400">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            </div>
-                            <span class="text-[10px] font-bold text-slate-400">${rep.date}</span>
-                        </div>
-                        <h3 class="font-black text-slate-900 truncate mb-2">${rep.title}</h3>
-                        <p class="text-xs text-slate-500 line-clamp-2">${rep.summary}</p>
-                    </div>
-                `;
-                grid.insertAdjacentHTML('beforeend', card);
-            });
-        }
-
-        function viewSpecificReport(id) {
-            showPage('ai-mentor');
-            setTimeout(() => {
-                const target = document.getElementById(`report-card-${id}`);
-                if(target) target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 100);
-        }
-
-        function initChart(id, chartData, targetId = null) {
-            const element = document.getElementById(targetId || `chart-${id}`);
-            if(!element) return;
-            const ctx = element.getContext('2d');
-            new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: chartData.labels,
-                    datasets: [{
-                        data: chartData.values,
-                        backgroundColor: ['#0F172A', '#F59E0B', '#64748B', '#CBD5E1', '#94A3B8'],
-                        borderWidth: 0,
-                        hoverOffset: 10
-                    }]
+                ],
+                systemInstruction: {
+                    parts: [{ text: i18n[currentLang].systemPrompt }]
                 },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false, 
-                    plugins: { 
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: '#0F172A',
-                            titleFont: { family: 'Noto Sans Arabic', size: 12 },
-                            bodyFont: { family: 'Noto Sans Arabic', size: 12 },
-                            padding: 12,
-                            cornerRadius: 12
-                        }
-                    }, 
-                    cutout: '72%' 
+                generationConfig: {
+                    responseMimeType: "application/json"
                 }
-            });
-        }
-
-        async function downloadPerfectPDF(id) {
-            const vault = document.getElementById('pdf-render-vault');
-            const original = document.getElementById(`report-card-${id}`);
-            const data = localReports.find(r => r.id === id);
-
-            vault.innerHTML = original.innerHTML;
-            vault.querySelector('button')?.remove();
-            
-            const clonedCanvas = vault.querySelector('canvas');
-            clonedCanvas.id = `cloned-chart-${id}`;
-            initChart(id, data.chart_data, clonedCanvas.id);
-
-            await new Promise(r => setTimeout(r, 800));
-
-            try {
-                const canvas = await html2canvas(vault, {
-                    scale: 2,
-                    useCORS: true,
-                    logging: false,
-                    backgroundColor: '#ffffff'
-                });
-
-                const imgData = canvas.toDataURL('image/png');
-                const { jsPDF } = window.jspdf;
-                const pdfWidth = 210;
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                
-                const pdf = new jsPDF('p', 'mm', [pdfWidth, pdfHeight]);
-                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight, undefined, 'FAST');
-                pdf.save(`FinMentor_Report_${id}.pdf`);
-            } catch (err) {
-                console.error("PDF Export Failed:", err);
-            } finally {
-                vault.innerHTML = '';
-            }
-        }
-
-        function handleFileUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                attachedFile = { base64: ev.target.result.split(',')[1], type: 'image', name: file.name };
-                document.getElementById('attachment-preview-container').classList.remove('hidden');
-                document.getElementById('file-name-display').textContent = file.name;
             };
-            reader.readAsDataURL(file);
-        }
 
-        function removeAttachment() {
-            attachedFile = { base64: null, type: null, name: null };
-            document.getElementById('attachment-preview-container').classList.add('hidden');
-            document.getElementById('fileInput').value = '';
-        }
+            const data = await fetchAI(payload);
+            const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            const report = JSON.parse(raw);
 
-        function showErrorMessage() {
-            const errorMsg = document.createElement('div');
-            errorMsg.className = "p-4 bg-red-50 text-red-600 rounded-2xl text-center text-sm font-bold border border-red-100 fade-in mb-4";
-            errorMsg.textContent = currentLang === 'ar' ? "عذراً، تعذر الاتصال بالذكاء الاصطناعي. يرجى المحاولة مرة أخرى." : "Sorry, connection to AI failed. Please try again.";
-            document.getElementById('chat-output').appendChild(errorMsg);
-            errorMsg.scrollIntoView({ behavior: 'smooth' });
-        }
+            renderReport(report);
+            input.value = "";
 
-        function handleEnterKey(e) { 
-            if(e.key === 'Enter' && !e.shiftKey) { 
-                e.preventDefault(); 
-                processQuery(); 
-            } 
+        } catch (e) {
+            showError();
+            console.error(e);
+        } finally {
+            toggleLoading(false);
         }
-        
-        // الانتقال لصفحة بدء التحليل عند الضغط على زر "تحليل جديد"
-        function startNewAnalysis() {
-            showPage('ai-mentor');
-            // تفريغ المدخلات السابقة لبدء جديد
-            document.getElementById('userInput').value = '';
-            removeAttachment();
+    }
+
+    function renderReport(data) {
+        const html = `
+            <div class="bg-white p-6 rounded-2xl shadow">
+                <h2 class="text-xl font-bold mb-3">${data.title}</h2>
+                <p class="text-slate-600 mb-4">${data.summary}</p>
+                <ul class="list-disc pr-6 space-y-2">
+                    ${data.recommendations.map(r => `<li>${r}</li>`).join("")}
+                </ul>
+            </div>
+        `;
+        document.getElementById("chat-output")
+            .insertAdjacentHTML("beforeend", html);
+    }
+
+    function toggleLoading(state) {
+        document.getElementById("sendIcon").classList.toggle("hidden", state);
+        document.getElementById("loadingIcon").classList.toggle("hidden", !state);
+        document.getElementById("sendBtn").disabled = state;
+    }
+
+    function showError() {
+        document.getElementById("chat-output").insertAdjacentHTML(
+            "beforeend",
+            `<div class="bg-red-50 text-red-600 p-4 rounded-xl text-sm">
+                تعذر الاتصال بالذكاء الاصطناعي، حاول مرة أخرى.
+            </div>`
+        );
+    }
+
+    function handleEnterKey(e) {
+        if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            processQuery();
         }
-        
-        window.onload = () => setLanguage('ar');
-    </script>
+    }
+</script>
+
 </body>
 </html>
