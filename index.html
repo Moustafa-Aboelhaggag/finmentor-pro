@@ -1,65 +1,122 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" id="html-root">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinMentor Pro | الواجهة الاحترافية</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>FinMentor Pro | المستشار المالي الذكي</title>
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23F59E0B' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' style='background-color:%230F172A;border-radius:4px'><path d='M13 7h8m0 0v8m0-8l-8 8-4-4-6 6'></path></svg>">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;700;900&display=swap');
-        body { font-family: 'Noto Sans Arabic', sans-serif; background-color: #F8FAFC; }
-        .premium-card { background: white; border-radius: 20px; border: 1px solid #e2e8f0; }
-        .loader { width: 20px; height: 20px; border: 2px solid #FFF; border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; }
-        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .hidden { display: none; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700;800&family=Noto+Sans+Arabic:wght@400;700;900&display=swap');
+        :root { --primary: #0F172A; --accent: #F59E0B; --bg: #F8FAFC; }
+        body { font-family: 'Noto Sans Arabic', 'Plus Jakarta Sans', sans-serif; background-color: var(--bg); color: #1E293B; }
+        .premium-card { background: white; border-radius: 32px; border: 1px solid #f1f5f9; transition: all 0.3s ease; }
+        .bidi-text { unicode-bidi: plaintext; text-align: start; }
+        .chart-container { position: relative; height: 240px; width: 100%; }
+        .celebration-bg { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); }
+        .fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        #userInput::-webkit-scrollbar { width: 4px; }
+        #userInput::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
-    <!-- Header -->
-    <header class="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-50">
+    <header class="bg-white/80 backdrop-blur-xl sticky top-0 z-[100] border-b border-slate-100 px-6 py-4">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-black text-slate-900">FinMentor <span class="text-amber-500">Pro</span></h1>
-            <nav class="flex gap-4">
-                <button id="btn-show-reports" class="text-slate-600 font-bold text-sm">تقاريري</button>
-                <button id="btn-new-chat" class="bg-slate-900 text-white px-4 py-2 rounded-lg text-xs font-bold">تحليل جديد</button>
-            </nav>
+            <div class="flex items-center gap-3 cursor-pointer group" onclick="window.showPage('home')">
+                <div class="w-11 h-11 celebration-bg rounded-2xl flex items-center justify-center shadow-xl group-hover:rotate-6 transition-transform">
+                    <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                </div>
+                <span class="text-xl font-black text-slate-900 tracking-tight">FinMentor <span class="text-amber-500">Pro</span></span>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div class="lang-switch bg-slate-100 p-1 rounded-xl flex gap-1">
+                    <button id="btn-ar" onclick="window.setLanguage('ar')" class="px-3 py-1.5 rounded-lg text-[10px] font-black transition-all">AR</button>
+                    <button id="btn-en" onclick="window.setLanguage('en')" class="px-3 py-1.5 rounded-lg text-[10px] font-black transition-all">EN</button>
+                </div>
+                <button onclick="window.startNewSession()" id="nav-new-analysis" class="bg-slate-900 text-white px-5 py-2 rounded-full text-[11px] font-black shadow-lg hover:bg-amber-500 transition-colors">تحليل جديد</button>
+            </div>
         </div>
     </header>
 
-    <main class="flex-grow p-6">
-        <div id="page-chat" class="max-w-4xl mx-auto space-y-6 pb-32">
-            <div id="chat-history" class="space-y-6">
-                <div class="premium-card p-6 bg-amber-50 border-amber-200">
-                    <p class="text-amber-900 font-bold">مرحباً بك في المستشار المالي.</p>
-                    <p class="text-amber-800 text-sm">ارفع ميزانيتك أو ملفاتك المالية وسأقوم بتحليلها فوراً عبر خادمنا الآمن.</p>
+    <main class="flex-grow">
+        <!-- Home Page -->
+        <div id="page-home" class="max-w-7xl mx-auto p-6 md:p-12 space-y-12 fade-in">
+            <section class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="space-y-6 text-center lg:text-right" id="home-content">
+                    <div class="inline-flex items-center gap-2 bg-amber-50 text-amber-700 px-4 py-2 rounded-full text-xs font-black mx-auto lg:mx-0" id="hero-badge">نظام تحليل مالي ذكي</div>
+                    <h1 class="text-4xl md:text-6xl font-black text-slate-900 leading-[1.2]" id="hero-title">ارتقِ بقراراتك المالية بقوة <span class="text-amber-500">الذكاء</span> الاصطناعي.</h1>
+                    <p class="text-slate-500 text-lg font-medium leading-relaxed" id="hero-desc">حوّل بياناتك ومستنداتك المالية (PDF، صور) إلى تقارير استراتيجية دقيقة ومؤمنة تماماً.</p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                        <button onclick="window.showPage('ai-mentor')" id="btn-start" class="bg-slate-900 text-white px-8 py-4 rounded-2xl font-black shadow-xl hover:-translate-y-1 transition-all">ابدأ الاستشارة</button>
+                        <button onclick="window.showPage('reports')" id="btn-view-saved" class="bg-white border-2 border-slate-100 px-8 py-4 rounded-2xl font-black hover:bg-slate-50 transition-all">عرض التقارير المحفوظة</button>
+                    </div>
                 </div>
+                <div class="relative hidden lg:block">
+                    <div class="absolute -inset-4 bg-amber-400/20 blur-3xl rounded-full"></div>
+                    <div class="relative bg-white p-8 rounded-[3rem] shadow-2xl border border-slate-100">
+                         <div class="space-y-4">
+                             <div class="h-4 w-1/2 bg-slate-100 rounded-full"></div>
+                             <div class="h-32 bg-slate-50 rounded-3xl border border-dashed border-slate-200 flex items-center justify-center">
+                                 <svg class="w-12 h-12 text-amber-500/30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                             </div>
+                             <div class="h-4 w-full bg-slate-50 rounded-full"></div>
+                         </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Reports Page -->
+        <div id="page-reports" class="hidden max-w-7xl mx-auto p-6 md:p-12 fade-in">
+            <h2 class="text-3xl font-black text-slate-900 mb-8" id="vault-title">الخزنة المالية <span class="text-sm font-normal text-slate-400 block mt-1" id="vault-subtitle">تقاريرك محفوظة بشكل سحابي آمن</span></h2>
+            <div id="reports-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+            <div id="no-reports" class="hidden text-center py-20 bg-white rounded-[2rem] border border-dashed border-slate-200">
+                <p class="text-slate-400 font-bold" id="no-reports-text">لا توجد تقارير حالياً. ابدأ استشارتك الأولى الآن!</p>
             </div>
         </div>
 
-        <div id="page-reports" class="max-w-7xl mx-auto hidden grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- ستظهر التقارير المخزنة هنا -->
+        <!-- AI Mentor Page -->
+        <div id="page-ai-mentor" class="hidden max-w-4xl mx-auto p-6 md:p-12 pb-56 fade-in">
+            <div id="chat-output" class="space-y-8"></div>
         </div>
     </main>
 
-    <!-- Input Area -->
-    <div class="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-slate-50 to-transparent">
-        <div class="max-w-3xl mx-auto bg-white border border-slate-200 rounded-2xl shadow-xl p-2">
-            <div id="file-preview" class="hidden px-4 py-2 bg-slate-50 rounded-t-xl border-b flex justify-between items-center">
-                <span id="file-name" class="text-xs font-bold text-slate-500 truncate"></span>
-                <button id="remove-file" class="text-red-500 text-xs">حذف</button>
+    <!-- Input Bar -->
+    <div id="input-container" class="fixed bottom-8 left-1/2 -translate-x-1/2 w-full max-w-3xl px-4 z-[110] hidden">
+        <div class="bg-white/95 backdrop-blur-2xl rounded-[2rem] shadow-2xl border border-slate-200 overflow-hidden">
+            <div id="file-preview-container" class="hidden p-4 border-b border-slate-100">
+                <div id="preview-box" class="relative inline-flex items-center gap-3 bg-slate-50 p-2 rounded-xl border border-slate-100">
+                    <img id="image-preview" src="" class="hidden h-12 w-12 object-cover rounded-lg border border-slate-100">
+                    <div id="pdf-icon-preview" class="hidden w-12 h-12 bg-red-100 text-red-600 items-center justify-center rounded-lg">
+                        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20"><path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path></svg>
+                    </div>
+                    <span id="file-name-text" class="text-xs font-bold text-slate-600 max-w-[150px] truncate"></span>
+                    <button onclick="window.clearFiles()" class="text-slate-400 hover:text-red-500 transition-colors px-2">✕</button>
+                </div>
             </div>
-            <div class="flex items-center gap-2">
-                <button id="attach-btn" class="p-3 text-slate-400 hover:text-amber-500">
+
+            <div class="flex items-end p-2 gap-2">
+                <button onclick="document.getElementById('fileInput').click()" class="w-12 h-12 flex items-center justify-center rounded-full text-slate-400 hover:text-amber-500 transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
                 </button>
-                <input type="file" id="fileInput" class="hidden" accept="image/*,application/pdf">
-                <input type="text" id="userInput" placeholder="اسأل عن ميزانيتك..." class="flex-grow p-3 border-none focus:ring-0 outline-none">
-                <button id="sendBtn" class="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-amber-600 transition-colors flex items-center gap-2">
-                    <span id="btn-text">إرسال</span>
-                    <span id="btn-loader" class="loader hidden"></span>
+                <input type="file" id="fileInput" class="hidden" accept="image/*,application/pdf" onchange="window.handleFileUpload(event)">
+                <textarea id="userInput" placeholder="اسأل عن ميزانيتك، ارفع صورة أو ملف PDF..." 
+                    class="flex-grow bg-transparent border-none focus:ring-0 p-3 text-sm font-medium resize-none min-h-[52px]" rows="1"
+                    onkeydown="window.handleKeydown(event)"></textarea>
+                <button id="sendBtn" onclick="window.processQuery()" class="w-12 h-12 bg-slate-900 text-white rounded-full flex items-center justify-center hover:bg-amber-500 transition-all shrink-0 shadow-lg">
+                    <svg id="sendIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                    <div id="loadingIcon" class="hidden w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                 </button>
             </div>
         </div>
@@ -67,122 +124,345 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // إعدادات Firebase (سيتم استبدالها تلقائياً في Canvas أو يدوياً في Vercel)
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { /* Fallback config */ };
+        // Firebase Configuration
+        const firebaseConfig = // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyB_S2Iqjev6MPRccIy1-ykn4-PTZioc9Kw",
+  authDomain: "finmentorai-app.firebaseapp.com",
+  projectId: "finmentorai-app",
+  storageBucket: "finmentorai-app.firebasestorage.app",
+  messagingSenderId: "238569893906",
+  appId: "1:238569893906:web:ce0714ffc2251ba30ea8cb",
+  measurementId: "G-FRCC6WR869"
+};
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'fin-mentor-prod';
-
-        let user = null;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'fin-mentor-pro';
+        
+        let currentUser = null;
+        let currentLang = 'ar';
         let attachedFile = { data: null, type: null, name: "" };
+        let reportsUnsubscribe = null;
 
-        // Auth
-        onAuthStateChanged(auth, u => { user = u; if(!u) signInAnonymously(auth); });
+        const translations = {
+            ar: {
+                navNewAnalysis: "تحليل جديد",
+                heroBadge: "نظام تحليل مالي ذكي",
+                heroTitle: 'ارتقِ بقراراتك المالية بقوة <span class="text-amber-500">الذكاء</span> الاصطناعي.',
+                heroDesc: "حوّل بياناتك ومستنداتك المالية (PDF، صور) إلى تقارير استراتيجية دقيقة ومؤمنة تماماً.",
+                btnStart: "ابدأ الاستشارة",
+                btnViewSaved: "عرض التقارير المحفوظة",
+                vaultTitle: 'الخزنة المالية <span class="text-sm font-normal text-slate-400 block mt-1">تقاريرك محفوظة بشكل سحابي آمن</span>',
+                noReports: "لا توجد تقارير حالياً. ابدأ استشارتك الأولى الآن!",
+                inputPlaceholder: "اسأل عن ميزانيتك، ارفع صورة أو ملف PDF...",
+                reportBadge: "التحليل الاستراتيجي الذكي",
+                recommendTitle: "توصيات المستشار المالي",
+                openReport: "فتح التقرير الذكي ←",
+                saving: "جاري الحفظ...",
+                errorApi: "حدث خطأ أثناء تحليل البيانات. تأكد من إعداد الـ API بشكل صحيح."
+            },
+            en: {
+                navNewAnalysis: "New Analysis",
+                heroBadge: "Smart Financial Analysis System",
+                heroTitle: 'Elevate your financial decisions with <span class="text-amber-500">AI</span> power.',
+                heroDesc: "Convert your financial data and documents (PDF, Images) into precise, secure strategic reports.",
+                btnStart: "Start Consultation",
+                btnViewSaved: "View Saved Reports",
+                vaultTitle: 'Financial Vault <span class="text-sm font-normal text-slate-400 block mt-1">Your reports are securely saved in the cloud</span>',
+                noReports: "No reports yet. Start your first consultation now!",
+                inputPlaceholder: "Ask about your budget, upload image or PDF...",
+                reportBadge: "Smart Strategic Analysis",
+                recommendTitle: "Financial Advisor Recommendations",
+                openReport: "Open Smart Report ←",
+                saving: "Saving...",
+                errorApi: "Error analyzing data. Please ensure API settings are correct."
+            }
+        };
 
-        // File Selection
-        document.getElementById('attach-btn').onclick = () => document.getElementById('fileInput').click();
-        document.getElementById('fileInput').onchange = async (e) => {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // --- UI Logic ---
+        window.showPage = (id) => {
+            ['home', 'reports', 'ai-mentor'].forEach(p => {
+                document.getElementById(`page-${p}`).classList.add('hidden');
+            });
+            document.getElementById(`page-${id}`).classList.remove('hidden');
+            document.getElementById('input-container').classList.toggle('hidden', id !== 'ai-mentor');
+        };
+
+        window.setLanguage = (lang) => {
+            currentLang = lang;
+            const root = document.getElementById('html-root');
+            root.setAttribute('lang', lang);
+            root.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
+            
+            // Update Toggle UI
+            document.getElementById('btn-ar').className = lang === 'ar' ? "px-3 py-1.5 rounded-lg text-[10px] font-black bg-white shadow-sm" : "px-3 py-1.5 rounded-lg text-[10px] font-black";
+            document.getElementById('btn-en').className = lang === 'en' ? "px-3 py-1.5 rounded-lg text-[10px] font-black bg-white shadow-sm" : "px-3 py-1.5 rounded-lg text-[10px] font-black";
+            
+            // Update Static Text Content
+            const t = translations[lang];
+            document.getElementById('nav-new-analysis').innerText = t.navNewAnalysis;
+            document.getElementById('hero-badge').innerText = t.heroBadge;
+            document.getElementById('hero-title').innerHTML = t.heroTitle;
+            document.getElementById('hero-desc').innerText = t.heroDesc;
+            document.getElementById('btn-start').innerText = t.btnStart;
+            document.getElementById('btn-view-saved').innerText = t.btnViewSaved;
+            document.getElementById('vault-title').innerHTML = t.vaultTitle;
+            document.getElementById('no-reports-text').innerText = t.noReports;
+            document.getElementById('userInput').placeholder = t.inputPlaceholder;
+
+            // Re-render report cards if on reports page
+            if (currentUser) setupReportsListener(currentUser.uid);
+        };
+
+        window.startNewSession = () => { 
+            document.getElementById('chat-output').innerHTML = ''; 
+            window.showPage('ai-mentor'); 
+        };
+
+        window.handleKeydown = (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                window.processQuery();
+            }
+        };
+
+        window.handleFileUpload = async (e) => {
             const file = e.target.files[0];
             if (!file) return;
+            document.getElementById('file-preview-container').classList.remove('hidden');
+            document.getElementById('file-name-text').innerText = file.name;
             attachedFile.name = file.name;
-            document.getElementById('file-preview').classList.remove('hidden');
-            document.getElementById('file-name').innerText = file.name;
-
-            const reader = new FileReader();
+            
             if (file.type.startsWith('image/')) {
-                reader.onload = (ev) => { attachedFile.data = ev.target.result.split(',')[1]; attachedFile.type = 'image'; };
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    attachedFile.data = event.target.result.split(',')[1];
+                    attachedFile.type = 'image';
+                    document.getElementById('image-preview').src = event.target.result;
+                    document.getElementById('image-preview').classList.remove('hidden');
+                    document.getElementById('pdf-icon-preview').classList.add('hidden');
+                };
                 reader.readAsDataURL(file);
             } else if (file.type === 'application/pdf') {
+                document.getElementById('pdf-icon-preview').classList.remove('hidden');
+                document.getElementById('pdf-icon-preview').classList.add('flex');
+                document.getElementById('image-preview').classList.add('hidden');
+                
+                const reader = new FileReader();
                 reader.onload = async function() {
-                    const pdf = await pdfjsLib.getDocument(new Uint8Array(this.result)).promise;
-                    let text = "";
-                    for(let i=1; i<=pdf.numPages; i++){
+                    const typedarray = new Uint8Array(this.result);
+                    const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                    let fullText = "";
+                    for (let i = 1; i <= pdf.numPages; i++) {
                         const page = await pdf.getPage(i);
-                        const content = await page.getTextContent();
-                        text += content.items.map(s => s.str).join(" ") + "\n";
+                        const textContent = await page.getTextContent();
+                        fullText += textContent.items.map(s => s.str).join(" ") + "\n";
                     }
-                    attachedFile.data = text;
+                    attachedFile.data = fullText;
                     attachedFile.type = 'pdf';
                 };
                 reader.readAsArrayBuffer(file);
             }
         };
 
-        // UI Helpers
-        const setUIState = (loading) => {
-            document.getElementById('sendBtn').disabled = loading;
-            document.getElementById('btn-text').classList.toggle('hidden', loading);
-            document.getElementById('btn-loader').classList.toggle('hidden', !loading);
+        window.clearFiles = () => {
+            attachedFile = { data: null, type: null, name: "" };
+            document.getElementById('fileInput').value = "";
+            document.getElementById('file-preview-container').classList.add('hidden');
         };
 
-        const renderResponse = (data) => {
-            const history = document.getElementById('chat-history');
-            const div = document.createElement('div');
-            div.className = "premium-card p-6 shadow-lg border-r-4 border-amber-500 animate-pulse";
-            const canvasId = 'chart-' + Math.random().toString(36).substr(2, 9);
-            div.innerHTML = `
-                <h3 class="font-black text-xl mb-2">${data.title}</h3>
-                <p class="text-slate-600 mb-4 text-sm">${data.summary}</p>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="space-y-2">${data.metrics.map(m => `<div class="bg-slate-50 p-3 rounded-lg flex justify-between text-xs"><span>${m.label}</span><b>${m.value}</b></div>`).join('')}</div>
-                    <canvas id="${canvasId}" class="max-h-[150px]"></canvas>
-                </div>
-            `;
-            history.prepend(div);
-            new Chart(document.getElementById(canvasId), {
-                type: 'bar',
-                data: { labels: data.chart.labels, datasets: [{ label: 'القيمة', data: data.chart.values, backgroundColor: '#f59e0b' }] },
-                options: { plugins: { legend: { display: false } } }
-            });
-            div.classList.remove('animate-pulse');
-        };
-
-        // Main Send Function
-        document.getElementById('sendBtn').onclick = async () => {
+        // --- Core Analysis Logic ---
+        window.processQuery = async () => {
             const input = document.getElementById('userInput');
-            if (!input.value && !attachedFile.data) return;
+            const queryText = input.value.trim();
+            if (!queryText && !attachedFile.data) return;
+            if (!currentUser) return;
 
-            setUIState(true);
+            toggleLoading(true);
             try {
-                // الاتصال بـ Serverless Function في المسار النسبي
-                const response = await fetch('/api/analyze', {
+                // IMPORTANT: This part assumes you have a backend at /api/analyze 
+                // Or you can integrate the direct Gemini API logic here.
+                const res = await fetch('/api/analyze', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        text: input.value,
+                        text: queryText,
                         fileData: attachedFile.data,
-                        fileType: attachedFile.type
+                        fileType: attachedFile.type,
+                        lang: currentLang
                     })
                 });
 
-                if (!response.ok) throw new Error("API Error");
+                if (!res.ok) throw new Error("API call failed");
 
-                const result = await response.json();
-                renderResponse(result);
+                const analysis = await res.json();
+                
+                window.renderReport(analysis, 'temp-' + Date.now());
+                
+                // Save to Firestore
+                const userReportsRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'financial_reports');
+                await addDoc(userReportsRef, {
+                    ...analysis,
+                    lang: currentLang,
+                    timestamp: serverTimestamp()
+                });
 
-                // حفظ في Firestore
-                if (user) {
-                    await addDoc(collection(db, 'artifacts', appId, 'users', user.uid, 'reports'), {
-                        ...result, timestamp: serverTimestamp()
-                    });
-                }
-
-                input.value = "";
-                document.getElementById('file-preview').classList.add('hidden');
-                attachedFile = { data: null, type: null, name: "" };
-
-            } catch (error) {
-                console.error(error);
-                alert("حدث خطأ في الخادم أثناء تحليل التقرير.");
+                input.value = '';
+                window.clearFiles();
+            } catch (err) {
+                console.error("Analysis Error:", err);
+                const t = translations[currentLang];
+                alert(t.errorApi);
             } finally {
-                setUIState(false);
+                toggleLoading(false);
             }
         };
 
+        window.renderReport = (data, id) => {
+            const t = translations[currentLang];
+            const container = document.getElementById('chat-output');
+            const wrapper = document.createElement('div');
+            wrapper.className = 'premium-card overflow-hidden shadow-xl border border-slate-100 mb-8 fade-in';
+            wrapper.innerHTML = `
+                <div id="content-${id}" class="p-8 md:p-12 bg-white bidi-text">
+                    <div class="flex justify-between items-start mb-8">
+                        <div>
+                            <span class="text-[10px] font-black text-amber-500 uppercase">${t.reportBadge}</span>
+                            <h2 class="text-3xl font-black text-slate-900 mt-1">${data.title}</h2>
+                        </div>
+                        <button onclick="window.downloadPDF('${id}', '${data.title}')" class="w-12 h-12 celebration-bg text-white rounded-2xl flex items-center justify-center hover:scale-105 transition-all shadow-lg">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        </button>
+                    </div>
+                    <p class="text-slate-600 mb-10 leading-relaxed text-lg">${data.summary}</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                        <div class="space-y-4">
+                            ${data.metrics.map(m => `
+                                <div class="bg-slate-50 p-5 rounded-2xl flex justify-between items-center border border-slate-100 hover:border-amber-200 transition-colors">
+                                    <span class="text-slate-500 font-bold text-sm">${m.label}</span>
+                                    <span class="text-slate-900 font-black text-lg">${m.value}</span>
+                                </div>`).join('')}
+                        </div>
+                        <div class="bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100 flex justify-center">
+                            <canvas id="chart-${id}" class="chart-container"></canvas>
+                        </div>
+                    </div>
+                    <div class="mt-12">
+                        <h4 class="font-black text-slate-900 mb-6 text-xl">${t.recommendTitle}</h4>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            ${data.recommendations.map(r => `
+                                <div class="p-5 bg-slate-50 border border-slate-100 rounded-2xl text-sm text-slate-600 leading-relaxed">
+                                    <span class="text-amber-500 font-black ml-2">•</span> ${r}
+                                </div>`).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.prepend(wrapper);
+            initChart(id, data.chart_data);
+        };
+
+        window.downloadPDF = async (id, title) => {
+            const element = document.getElementById(`content-${id}`);
+            const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+            const imgData = canvas.toDataURL('image/png');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const imgProps = pdf.getImageProperties(imgData);
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+            pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+            pdf.save(`FinMentor_${title}.pdf`);
+        };
+
+        function initChart(id, chartData) {
+            setTimeout(() => {
+                const canvas = document.getElementById(`chart-${id}`);
+                if (!canvas) return;
+                const ctx = canvas.getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: chartData.labels,
+                        datasets: [{
+                            data: chartData.values,
+                            backgroundColor: ['#0F172A', '#F59E0B', '#64748B', '#CBD5E1', '#E2E8F0'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        plugins: { legend: { position: 'bottom', labels: { font: { family: currentLang === 'ar' ? 'Noto Sans Arabic' : 'Plus Jakarta Sans', size: 10 } } } },
+                        cutout: '70%'
+                    }
+                });
+            }, 200);
+        }
+
+        function toggleLoading(isLoading) {
+            document.getElementById('sendIcon').classList.toggle('hidden', isLoading);
+            document.getElementById('loadingIcon').classList.toggle('hidden', !isLoading);
+            document.getElementById('sendBtn').disabled = isLoading;
+        }
+
+        const setupReportsListener = (uid) => {
+            if (reportsUnsubscribe) reportsUnsubscribe();
+            const reportsRef = collection(db, 'artifacts', appId, 'users', uid, 'financial_reports');
+            const q = query(reportsRef, orderBy('timestamp', 'desc'));
+            const t = translations[currentLang];
+
+            reportsUnsubscribe = onSnapshot(q, (snap) => {
+                const grid = document.getElementById('reports-grid');
+                grid.innerHTML = '';
+                if (snap.empty) {
+                    document.getElementById('no-reports').classList.remove('hidden');
+                    return;
+                }
+                document.getElementById('no-reports').classList.add('hidden');
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    const card = document.createElement('div');
+                    card.className = 'premium-card p-6 h-48 flex flex-col justify-between cursor-pointer hover:border-amber-400 group shadow-sm hover:shadow-lg transition-all';
+                    card.onclick = () => { 
+                        window.setLanguage(d.lang || 'ar'); 
+                        window.showPage('ai-mentor'); 
+                        window.renderReport(d, doc.id); 
+                    };
+                    const dateStr = d.timestamp ? new Date(d.timestamp.seconds*1000).toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US') : t.saving;
+                    card.innerHTML = `
+                        <div>
+                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest">${dateStr}</span>
+                            <h4 class="text-lg font-black text-slate-900 mt-2 line-clamp-2">${d.title}</h4>
+                        </div>
+                        <div class="text-amber-500 font-bold text-[10px] flex items-center gap-1 group-hover:gap-2 transition-all">${t.openReport}</div>
+                    `;
+                    grid.appendChild(card);
+                });
+            }, (err) => console.error("Firestore Error:", err));
+        };
+
+        onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                currentUser = user;
+                setupReportsListener(user.uid);
+            } else {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            }
+        });
+
+        // Initialize App Language
+        window.setLanguage('ar');
     </script>
 </body>
 </html>
